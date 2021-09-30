@@ -1,66 +1,41 @@
-import { Persone, Comuni } from "./example";
-import { Select } from "./select";
-import { sqlCalc } from "./sqlCalc";
+import { Comuni, Persone } from "./example";
+import { IDbEngine } from "./project/db_engine";
+import { DbInterface } from "./project/db_interface"
 
-async function main() {
-	let persone = new Persone();
-	let comuni = new Comuni();
-	let provincia = new Comuni("provincia");
-
-	let select0 = new Select({
-		from: persone,
-		fields: [
-			persone.id,
-			persone.nome,
-			persone.comune.as("residenza"),
-		],
-		limitSize: 5,
-	}).asJoinable("prova");
-	
-	let select1 = new Select({
-		from: select0
-			.innerJoin(comuni)
-			.innerJoin(provincia, [comuni.provincia, provincia.id]),
-		fields: [
-			select0.id.as("idPersona"),
-			comuni.id.as("idComune"),
-			select0.nome,
-			comuni.comune,
-			provincia.comune.as("provincia"),
-		],
-		orderBy: [comuni.id, select0.id],
-		limitSize: 10,
-	});
-	
-	console.log(select1.sql);
-	
+class DbEngine implements IDbEngine {
+	async executeSelect(sql: string, params: any[]): Promise<any[]> {
+		console.log(sql, params);
+		return [];
+	}
 }
+const PAGE_SIZE = 50;
+let dbInterface = new DbInterface({
+	dbEngine: new DbEngine(),
+	getLimitByPageIndex: index => [index * PAGE_SIZE, PAGE_SIZE],
+});
 
-function test() {
-	let persone = new Persone();
-	let residenza = new Comuni();
-	
-	sqlCalc("(:id*2)+1", {id: persone.id});
-	sqlCalc("(?*2)+1", [persone.id]);
-	sqlCalc("(?*2*?)+1", persone.id);
-	sqlCalc("(?*2)+1", persone.id, persone.id);
-	
-	let nextPersona = new Select({
-		from: persone,
-		fields: [
-			persone.comune,
-		]
-	}).asJoinable();
-	
-	let select = new Select({
-		from: nextPersona.innerJoin(residenza)
-	});
-	
-	console.log(select.sql);
-}
+let persone = new Persone();
+let residenza = new Comuni();
 
-function logQueryResult(a: any) {
-	console.table(JSON.parse(JSON.stringify(a)));
-}
+let preparedSelect = dbInterface.prepareSelectPaged({
+	from: persone.innerJoin(residenza),
+	fields: [
+		persone.nome,
+		persone.cognome,
+		residenza.comune,
+	],
+	where: "persone.nome like :nome:"
+});
 
-test();
+preparedSelect.run({
+	params: {
+		nome: "Sam"
+	},
+	pageIndex: 0,
+});
+preparedSelect.run({
+	params: {
+		nome: "Bill"
+	},
+	pageIndex: 1,
+});

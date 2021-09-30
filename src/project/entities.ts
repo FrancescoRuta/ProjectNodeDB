@@ -16,7 +16,6 @@ export interface JoinablePrimaryKey {
 	ambiguous: boolean;
 }
 
-//sql formulas MUST have an alias (?)
 export class QueryColumn {
 	private __alias: string | null;
 	public constructor(private db: string | null, private table: string | null, private col: string) {
@@ -148,7 +147,6 @@ export abstract class Joinable extends SqlFrom {
 					if (pk.ambiguous || fk.ambiguous || result != null) {
 						throw new Error(error);
 					}
-					console.log(fk.column.columnFullName, Object.keys(fk.column));
 					result = [pk.column.columnFullName, fk.column.columnFullName];
 				}
 			}

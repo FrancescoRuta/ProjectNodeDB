@@ -1,4 +1,4 @@
-import { ForeignKey, QueryColumn, Table } from "./entities";
+import { ForeignKey, QueryColumn, Table } from "./project/entities";
 
 export class Persone extends Table {
 	protected ___alias: string;

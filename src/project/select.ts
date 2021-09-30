@@ -1,5 +1,8 @@
-import { PAGE_SIZE } from "./config";
+import { IDbEngine } from "./db_engine";
+import { DbInterfaceConfig } from "./db_interface";
 import { ForeignKey, Joinable, JoinablePrimaryKey, QueryColumn, SqlFrom } from "./entities";
+import { PreparedQuery } from "./prepared_query";
+import { getPositionalQuery } from "./sql_helper";
 
 export type JoinableSelectWithFileds = Joinable & {
 	[col: string]: QueryColumn
@@ -12,12 +15,11 @@ export interface SelectParams {
 	groupBy?: string;
 	having?: string;
 	orderBy?: QueryColumn | QueryColumn[];
-	pageIndex?: number;
 	limitOffset?: number;
 	limitSize?: number;
 }
 
-export class JoinableSelect extends Joinable {
+class JoinableSelect extends Joinable {
 	private foreignKeys: ForeignKey[];
 	private primaryKeys: JoinablePrimaryKey[];
 	public constructor(
@@ -82,10 +84,6 @@ export class Select {
 			having,
 			orderBy,
 		} = selectParams;
-		if (!limitSize && selectParams.pageIndex) {
-			limitOffset = PAGE_SIZE * selectParams.pageIndex;
-			limitSize = PAGE_SIZE;
-		}
 	
 		where = where ? "WHERE " + where : "";
 		groupBy = groupBy ? "GROUP BY " + groupBy : "";
@@ -102,7 +100,7 @@ export class Select {
 		let limit = limitSize ? `LIMIT ${limitOffset ? limitOffset + "," : ""}${limitSize}` : "";
 		let sql = `SELECT ${fields} FROM ${(<any>from).__sqlFrom} ${where} ${groupBy} ${having} ${orderByStr} ${limit}`;
 		
-		return sql.replace(/\s+/gm, " ").replace(/\s*\(\s*/gm, " (").replace(/\s*\)\s*/gm, ") ");
+		return sql.replace(/\s+/gm, " ").replace(/\s*\(\s*/gm, " (").replace(/\s*\)\s*/gm, ") ").trim();
 	}
 	public get sql(): string {
 		return this.__sql;
@@ -122,5 +120,47 @@ export class Select {
 				}
 			},
 		});
+	}
+	public get hasHardLimit(): boolean {
+		return this.selectParams.limitSize != null;
+	}
+	public prepare(dbInterfaceConfig: DbInterfaceConfig): PreparedSelect {
+		let [sql, paramNames] = getPositionalQuery(this.sql);
+		return new PreparedSelect(dbInterfaceConfig.dbEngine, sql, paramNames);
+	}
+	public preparePaged(dbInterfaceConfig: DbInterfaceConfig): PreparedSelectPaged {
+		if (this.hasHardLimit) throw new Error("Pagination is not allowed for selects with hard limit.");
+		let [sql, paramNames] = getPositionalQuery(this.sql);
+		return new PreparedSelectPaged(dbInterfaceConfig.dbEngine, dbInterfaceConfig.getLimitByPageIndex, sql, paramNames);
+	}
+	
+}
+
+export class PreparedSelect extends PreparedQuery {
+	public constructor(private dbEngine: IDbEngine, private sql: string, private paramNames: string[]) {
+		super();
+	}
+	
+	public run(params: any): Promise<any[]> {
+		if (Array.isArray(params)) {
+			return this.dbEngine.executeSelect(this.sql, params);
+		} else {
+			return this.dbEngine.executeSelect(this.sql, this.paramNames.map(p => params[p]));
+		}
+	}
+}
+
+export class PreparedSelectPaged extends PreparedQuery {
+	public constructor(private dbEngine: IDbEngine, private getLimitByPageIndex: (pageIndex: number) => [number, number], private sql: string, private paramNames: string[]) {
+		super();
+		this.sql += " LIMIT ?,?";
+	}
+	
+	public run({params, pageIndex}: {params: any, pageIndex: number}): Promise<any[]> {
+		if (Array.isArray(params)) {
+			return this.dbEngine.executeSelect(this.sql, params.concat(this.getLimitByPageIndex(pageIndex)));
+		} else {
+			return this.dbEngine.executeSelect(this.sql, this.paramNames.map(p => params[p]).concat(this.getLimitByPageIndex(pageIndex)));
+		}
 	}
 }
