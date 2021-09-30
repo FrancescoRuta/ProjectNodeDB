@@ -30,6 +30,9 @@ export class QueryColumn {
 	public get alias(): string | null {
 		return this.__alias;
 	}
+	public get tableName(): string | null {
+		return this.table;
+	}
 	public get aliasedColumn(): string {
 		return this.__alias ? this.columnFullName + " AS " + this.__alias : this.columnFullName;
 	}

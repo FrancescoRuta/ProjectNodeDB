@@ -1,3 +1,4 @@
+import { QueryColumn } from "./entities";
 
 export function getPositionalQuery(sql: string): [string, string[]] {
 	let tokens = tokenizeSqlString(sql);
@@ -31,6 +32,31 @@ export function tokenizeSqlString(sql: string): Token[] {
 			regex: /^\?/g,
 		}
 	]);
+}
+
+export function replaceColumnPlaceholders(sql: string, entityParams: any) {
+	let tokens = tokenizeSqlString(sql);
+	sql = "";
+	for(let token of tokens){
+		if(token.ty == "COLUMN_PLACEHOLDER"){
+			let objectPathStr = token.value.substring(1);
+			let objectPath = objectPathStr.split(".");
+			let value = entityParams;
+			for(let name of objectPath){
+				if(!value){
+					throw new Error(`Entity "${objectPathStr}" not found.`);
+				}
+				value = value[name];
+			}
+			if(!(value instanceof QueryColumn)){
+				throw new Error(`"${objectPathStr}" is not an entity.`);
+			}
+			sql += value.columnFullName;
+		}else{
+			sql += token.value;
+		}
+	}
+	return sql;
 }
 
 type TokenType = "STRING_LITERAL" | "NAMED_PLACEHOLDER" | "COLUMN_PLACEHOLDER" | "ANONYMOUS_PLACEHOLDER" | "OTHER";

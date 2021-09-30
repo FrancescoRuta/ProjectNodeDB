@@ -1,14 +1,13 @@
-import { IDbEngine } from "./db_engine";
-import { DbInterfaceConfig } from "./db_interface";
+import { IDbEngine } from "../db_engine";
+import { DbInterfaceConfig, ExecuteBefore } from "../db_interface";
 import {
 	ForeignKey,
 	Joinable,
 	JoinablePrimaryKey,
 	QueryColumn,
-	SqlFrom,
-} from "./entities";
-import { PreparedQuery } from "./prepared_query";
-import { getPositionalQuery, tokenizeSqlString } from "./sql_helper";
+} from "../entities";
+import { PreparedQuery } from "../prepared_query";
+import { getPositionalQuery, replaceColumnPlaceholders, tokenizeSqlString } from "../sql_helper";
 
 export type JoinableSelectWithFileds = Joinable & {
 	[col: string]: QueryColumn;
@@ -135,28 +134,8 @@ export class Select {
 			this.clauseToString("ORDER BY", orderBy) +
 			limit;
 
-		let tokens = tokenizeSqlString(sql);
-		sql = "";
-		for(let token of tokens){
-			if(token.ty == "COLUMN_PLACEHOLDER"){
-				let objectPathStr = token.value.substring(1);
-				let objectPath = objectPathStr.split(".");
-				let value = selectParams.entityParams;
-				for(let name of objectPath){
-					if(!value){
-						throw new Error(`Entity "${objectPathStr}" not found.`);
-					}
-					value = value[name];
-				}
-				if(!(value instanceof QueryColumn)){
-					throw new Error(`"${objectPathStr}" is not an entity.`);
-				}
-				sql += value.columnFullName;
-			}else{
-				sql += token.value;
-			}
-		}
-		return sql
+		
+		return replaceColumnPlaceholders(sql, selectParams.entityParams)
 			.replace(/\s+/gm, " ")
 			.replace(/\s*\(\s*/gm, "(")
 			.replace(/\s*\)\s*/gm, ")")
@@ -219,13 +198,11 @@ export class Select {
 	public get hasHardLimit(): boolean {
 		return this.selectParams.limitSize != null;
 	}
-	public prepare(dbInterfaceConfig: DbInterfaceConfig): PreparedSelect {
+	public prepare(dbInterfaceConfig: DbInterfaceConfig, executeBefore: ExecuteBefore<void>): PreparedSelect {
 		let [sql, paramNames] = getPositionalQuery(this.sql);
-		return new PreparedSelect(dbInterfaceConfig.dbEngine, sql, paramNames);
+		return new PreparedSelect(dbInterfaceConfig.dbEngine, sql, paramNames, executeBefore);
 	}
-	public preparePaged(
-		dbInterfaceConfig: DbInterfaceConfig
-	): PreparedSelectPaged {
+	public preparePaged(dbInterfaceConfig: DbInterfaceConfig, executeBefore: ExecuteBefore<number | undefined>): PreparedSelectPaged {
 		if (this.hasHardLimit)
 			throw new Error(
 				"Pagination is not allowed for selects with hard limit."
@@ -235,7 +212,8 @@ export class Select {
 			dbInterfaceConfig.dbEngine,
 			dbInterfaceConfig.getLimitByPageIndex,
 			sql,
-			paramNames
+			paramNames,
+			executeBefore
 		);
 	}
 }
@@ -244,12 +222,14 @@ export class PreparedSelect extends PreparedQuery {
 	public constructor(
 		private dbEngine: IDbEngine,
 		private sql: string,
-		private paramNames: string[]
+		private paramNames: string[],
+		private executeBefore: ExecuteBefore<void>,
 	) {
 		super();
 	}
 
-	public run(params: any): Promise<any[]> {
+	public run(params?: any): Promise<any[]> {
+		this.executeBefore(params);
 		if (Array.isArray(params)) {
 			return this.dbEngine.executeSelect(this.sql, params);
 		} else {
@@ -266,7 +246,8 @@ export class PreparedSelectPaged extends PreparedQuery {
 		private dbEngine: IDbEngine,
 		private getLimitByPageIndex: (pageIndex: number) => [number, number],
 		private sql: string,
-		private paramNames: string[]
+		private paramNames: string[],
+		private executeBefore: ExecuteBefore<number | undefined>,
 	) {
 		super();
 		this.sql += " LIMIT ?,?";
@@ -276,9 +257,12 @@ export class PreparedSelectPaged extends PreparedQuery {
 		params,
 		pageIndex,
 	}: {
-		params: any;
-		pageIndex: number;
+		params?: any;
+		pageIndex?: number;
 	}): Promise<any[]> {
+		pageIndex = pageIndex ?? this.executeBefore(params);
+		pageIndex ??= 0;
+		if (pageIndex < 0) pageIndex = 0;
 		if (Array.isArray(params)) {
 			return this.dbEngine.executeSelect(
 				this.sql,
