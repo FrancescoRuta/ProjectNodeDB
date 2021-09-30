@@ -67,6 +67,7 @@ export class JoinableSelect extends Joinable {
 
 export class Select {
 	private __sql: string;
+	private static aliasUid = 0;
 	public constructor(private selectParams: SelectParams) {
 		this.__sql = this.computeSql(selectParams);
 	}
@@ -101,23 +102,25 @@ export class Select {
 		let limit = limitSize ? `LIMIT ${limitOffset ? limitOffset + "," : ""}${limitSize}` : "";
 		let sql = `SELECT ${fields} FROM ${(<any>from).__sqlFrom} ${where} ${groupBy} ${having} ${orderByStr} ${limit}`;
 		
-		return sql.replace(/\s+/gm, " ");
+		return sql.replace(/\s+/gm, " ").replace(/\s*\(\s*/gm, " (").replace(/\s*\)\s*/gm, ") ");
 	}
 	public get sql(): string {
 		return this.__sql;
 	}
-	public asJoinable(alias: string): JoinableSelectWithFileds {
-		let j = new JoinableSelect("(" + this.__sql + ") AS " + alias, alias, this.selectParams);
-		const hasKey = <T extends object>(obj: T, k: keyof any): k is keyof T => k in obj;
-		let p = new Proxy(j, {
-			get: (target, key) => {
-				if (hasKey(target, key)) {
+	public asJoinable(alias?: string): JoinableSelectWithFileds {
+		if (!alias) alias = "JoinableSelect" + Select.aliasUid++;
+		return this.createJoinableProxy(alias, new JoinableSelect("(" + this.__sql + ") AS " + alias, alias, this.selectParams));
+	}
+	private createJoinableProxy(alias: string, joinableSelect: JoinableSelect): any {
+		return new Proxy(joinableSelect, {
+			get: (target: any, key) => {
+				let k = key.toString();
+				if (k.startsWith("__") || k == "innerJoin" || k == "leftJoin" || k == "rightJoin" || k == "naturalJoin") {
 					return target[key];
 				} else {
-					return new QueryColumn(null, alias, key.toString());
+					return new QueryColumn(null, alias, k);
 				}
 			},
 		});
-		return <any>p;
 	}
 }

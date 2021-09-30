@@ -53,33 +53,33 @@ export abstract class Joinable extends SqlFrom {
 		other: Joinable,
 		joinOn?: [QueryColumn, QueryColumn]
 	): Joinable {
-		return this.genericJoin(other, "INNER", joinOn);
+		return this.__genericJoin(other, "INNER", joinOn);
 	}
 
 	public leftJoin(
 		other: Joinable,
 		joinOn?: [QueryColumn, QueryColumn]
 	): Joinable {
-		return this.genericJoin(other, "LEFT", joinOn);
+		return this.__genericJoin(other, "LEFT", joinOn);
 	}
 
 	public rightJoin(
 		other: Joinable,
 		joinOn?: [QueryColumn, QueryColumn]
 	): Joinable {
-		return this.genericJoin(other, "RIGHT", joinOn);
+		return this.__genericJoin(other, "RIGHT", joinOn);
 	}
 
 	public naturalJoin(other: Joinable): Joinable {
 		let sql = `(${this.__sqlFrom}), (${other.__sqlFrom})`;
 		return new JoinResult(
-			this.joinKeys(this.__foreignKeys, other.__foreignKeys),
-			this.joinKeys(this.__primaryKeys, other.__primaryKeys),
+			this.__joinKeys(this.__foreignKeys, other.__foreignKeys),
+			this.__joinKeys(this.__primaryKeys, other.__primaryKeys),
 			sql
 		);
 	}
 
-	private genericJoin(
+	private __genericJoin(
 		other: Joinable,
 		joinType: "INNER" | "LEFT" | "RIGHT",
 		joinOn?: [QueryColumn, QueryColumn]
@@ -87,22 +87,22 @@ export abstract class Joinable extends SqlFrom {
 		let joinOnStr: [string, string];
 		if (!joinOn) {
 			let ambiguousError = `Ambiguous join between "${this.__sqlFrom}" and "${other.__sqlFrom}"`;
-			let joinOn1 = this.findJoinableKeys(
+			let joinOn1 = this.__findJoinableKeys(
 				this.__primaryKeys,
 				other.__foreignKeys,
 				ambiguousError
 			);
-			let joinOn2 = this.findJoinableKeys(
+			let joinOn2 = this.__findJoinableKeys(
 				other.__primaryKeys,
 				this.__foreignKeys,
 				ambiguousError
 			);
-			if (joinOn1 == null && joinOn2 == null) {
+			if (joinOn1 === null && joinOn2 === null) {
 				throw new Error(
 					`No valid join keys found between "${this.__sqlFrom}" and "${other.__sqlFrom}"`
 				);
 			}
-			if (joinOn1 != null && joinOn2 != null) {
+			if (joinOn1 !== null && joinOn2 !== null) {
 				throw new Error(ambiguousError);
 			}
 			joinOnStr = joinOn1 ?? joinOn2!;
@@ -111,14 +111,14 @@ export abstract class Joinable extends SqlFrom {
 		}
 		let sql = `(${this.__sqlFrom}) ${joinType} JOIN (${other.__sqlFrom}) ON ${joinOnStr[0]} = ${joinOnStr[1]}`;
 		return new JoinResult(
-			this.joinKeys(this.__foreignKeys, other.__foreignKeys),
-			this.joinKeys(this.__primaryKeys, other.__primaryKeys),
+			this.__joinKeys(this.__foreignKeys, other.__foreignKeys),
+			this.__joinKeys(this.__primaryKeys, other.__primaryKeys),
 			sql
 		);
 	}
 
-	private joinKeys(keys1: JoinKey[], keys2: JoinKey[]): JoinKey[] {
-		keys1 = keys1.map(this.copy);
+	private __joinKeys(keys1: JoinKey[], keys2: JoinKey[]): JoinKey[] {
+		keys1 = this.__copy(keys1);
 		let newKeys = [...keys1];
 		for (let fk of keys2) {
 			let isAmbiguous = false;
@@ -130,13 +130,13 @@ export abstract class Joinable extends SqlFrom {
 				}
 			}
 			if (!isAmbiguous) {
-				newKeys.push(this.copy(fk));
+				newKeys.push(this.__copy(fk));
 			}
 		}
 		return newKeys;
 	}
 
-	private findJoinableKeys(
+	private __findJoinableKeys(
 		pks: JoinablePrimaryKey[],
 		fks: ForeignKey[],
 		error: string
@@ -148,6 +148,7 @@ export abstract class Joinable extends SqlFrom {
 					if (pk.ambiguous || fk.ambiguous || result != null) {
 						throw new Error(error);
 					}
+					console.log(fk.column.columnFullName, Object.keys(fk.column));
 					result = [pk.column.columnFullName, fk.column.columnFullName];
 				}
 			}
@@ -155,9 +156,22 @@ export abstract class Joinable extends SqlFrom {
 		return result;
 	}
 
-	private copy<T>(target: T): T {
-		//TODO: fix
-		return JSON.parse(JSON.stringify(target));
+	private __copy<T extends JoinKey | JoinKey[]>(k: T): T {
+		let result: any;
+		if (Array.isArray(k)) {
+			result = k.map(k => ({
+				column: k.column,
+				tableName: k.tableName,
+				ambiguous: k.ambiguous,
+			}));
+		} else {
+			result = {
+				column: k.column,
+				tableName: k.tableName,
+				ambiguous: k.ambiguous,
+			};
+		}
+		return result;
 	}
 }
 
