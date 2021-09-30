@@ -9,12 +9,17 @@ async function main() {
 
 	let select0 = new Select({
 		from: persone,
+		fields: [
+			persone.id,
+			persone.nome,
+			persone.comune.as("residenza"),
+		],
 		limitSize: 5,
 	}).asJoinable("prova");
 	
 	let select1 = new Select({
 		from: select0
-			.innerJoin(comuni, [select0.comune, comuni.id])
+			.innerJoin(comuni)
 			.innerJoin(provincia, [comuni.provincia, provincia.id]),
 		fields: [
 			select0.id.as("idPersona"),

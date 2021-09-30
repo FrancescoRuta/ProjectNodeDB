@@ -10,7 +10,7 @@ export class Persone extends Table {
 	protected get __foreignKeys(): ForeignKey[] {
 		return [
 			{
-				column: this.comune.column,
+				column: this.comune,
 				tableName: "comuni",
 				ambiguous: false,
 			},
@@ -25,26 +25,26 @@ export class Persone extends Table {
 	}
 
 	public get id(): QueryColumn {
-		return new QueryColumn(this.__alias + ".id");
+		return new QueryColumn("prove", this.__alias, "id");
 	}
 
 	public get comune(): QueryColumn {
-		return new QueryColumn(this.__alias + ".comune");
+		return new QueryColumn("prove", this.__alias, "comune");
 	}
 
 	public get data_nascita(): QueryColumn {
-		return new QueryColumn(this.__alias + ".data_nascita");
+		return new QueryColumn("prove", this.__alias, "data_nascita");
 	}
 
 	public get nome(): QueryColumn {
-		return new QueryColumn(this.__alias + ".nome");
+		return new QueryColumn("prove", this.__alias, "nome");
 	}
 
 	public get cognome(): QueryColumn {
-		return new QueryColumn(this.__alias + ".cognome");
+		return new QueryColumn("prove", this.__alias, "cognome");
 	}
-	protected get __primaryKey(): string {
-		return this.id.column;
+	protected get __primaryKey(): QueryColumn {
+		return this.id;
 	}
 }
 
@@ -58,7 +58,7 @@ export class Comuni extends Table {
 	protected get __foreignKeys(): ForeignKey[] {
 		return [
 			{
-				column: this.provincia.column,
+				column: this.provincia,
 				tableName: "comuni",
 				ambiguous: false,
 			},
@@ -70,15 +70,15 @@ export class Comuni extends Table {
 	}
 
 	public get comune(): QueryColumn {
-		return new QueryColumn(this.__alias + ".comune");
+		return new QueryColumn("prove", this.__alias, "comune");
 	}
 	public get provincia(): QueryColumn {
-		return new QueryColumn(this.__alias + ".provincia");
+		return new QueryColumn("prove", this.__alias, "provincia");
 	}
 	public get id(): QueryColumn {
-		return new QueryColumn(this.__alias + ".id");
+		return new QueryColumn("prove", this.__alias, "id");
 	}
-	protected get __primaryKey(): string {
-		return this.id.column;
+	protected get __primaryKey(): QueryColumn {
+		return this.id;
 	}
 }

@@ -56,9 +56,9 @@ export async function select(selectParams: SelectParams): Promise<any[]> {
 	let orderByStr = "";
 	if (orderBy) {
 		if (Array.isArray(orderBy)) {
-			orderByStr = "ORDER BY " + orderBy.map((a) => a.column).join(",");
+			orderByStr = "ORDER BY " + orderBy.map((a) => a.columnFullName).join(",");
 		} else {
-			orderByStr = "ORDER BY " + orderBy.column;
+			orderByStr = "ORDER BY " + orderBy.columnFullName;
 		}
 	}
 

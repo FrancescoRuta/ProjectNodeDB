@@ -1,35 +1,42 @@
 type JoinKey = {
-	column: string;
+	column: QueryColumn;
 	tableName: string;
 	ambiguous: boolean;
 };
 
 export interface ForeignKey {
-	column: string;
+	column: QueryColumn;
 	tableName: string;
 	ambiguous: boolean;
 }
 
 export interface JoinablePrimaryKey {
-	column: string;
+	column: QueryColumn;
 	tableName: string;
 	ambiguous: boolean;
 }
 
+//sql formulas MUST have an alias (?)
 export class QueryColumn {
-	private alias: string | null;
-	public constructor(private col: string) {
-		this.alias = null;
+	private __alias: string | null;
+	public constructor(private db: string | null, private table: string | null, private col: string) {
+		this.__alias = null;
 	}
-	public get column(): string {
+	public get columnName(): string {
 		return this.col;
 	}
+	public get columnFullName(): string {
+		return (this.db ? this.db + "." : "") + (this.table ? this.table + "." : "") + this.col;
+	}
+	public get alias(): string | null {
+		return this.__alias;
+	}
 	public get aliasedColumn(): string {
-		return this.alias ? this.col + " AS " + this.alias : this.col;
+		return this.__alias ? this.columnFullName + " AS " + this.__alias : this.columnFullName;
 	}
 	public as(alias: string): QueryColumn {
-		let q = new QueryColumn(this.col);
-		q.alias = alias;
+		let q = new QueryColumn(this.db, this.table, this.col);
+		q.__alias = alias;
 		return q;
 	}
 }
@@ -100,7 +107,7 @@ export abstract class Joinable extends SqlFrom {
 			}
 			joinOnStr = joinOn1 ?? joinOn2!;
 		} else {
-			joinOnStr = [joinOn[0].column, joinOn[1].column];
+			joinOnStr = [joinOn[0].columnFullName, joinOn[1].columnFullName];
 		}
 		let sql = `(${this.__sqlFrom}) ${joinType} JOIN (${other.__sqlFrom}) ON ${joinOnStr[0]} = ${joinOnStr[1]}`;
 		return new JoinResult(
@@ -141,7 +148,7 @@ export abstract class Joinable extends SqlFrom {
 					if (pk.ambiguous || fk.ambiguous || result != null) {
 						throw new Error(error);
 					}
-					result = [pk.column, fk.column];
+					result = [pk.column.columnFullName, fk.column.columnFullName];
 				}
 			}
 		}
@@ -149,6 +156,7 @@ export abstract class Joinable extends SqlFrom {
 	}
 
 	private copy<T>(target: T): T {
+		//TODO: fix
 		return JSON.parse(JSON.stringify(target));
 	}
 }
@@ -173,7 +181,7 @@ export class JoinResult extends Joinable {
 }
 
 export abstract class Table extends Joinable {
-	protected abstract get __primaryKey(): string;
+	protected abstract get __primaryKey(): QueryColumn;
 	protected abstract get __tableName(): string;
 	protected abstract get __alias(): string;
 	protected get __primaryKeys(): JoinablePrimaryKey[] {

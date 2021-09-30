@@ -6,7 +6,7 @@ export type JoinableSelectWithFileds = Joinable & {
 };
 
 export interface SelectParams {
-	from: SqlFrom;
+	from: Joinable;
 	fields?: QueryColumn[];
 	where?: string;
 	groupBy?: string;
@@ -18,29 +18,56 @@ export interface SelectParams {
 }
 
 export class JoinableSelect extends Joinable {
+	private foreignKeys: ForeignKey[];
+	private primaryKeys: JoinablePrimaryKey[];
 	public constructor(
-		private __sql: string,
-		private alias: string,
+		private sql: string,
+		alias: string,
+		selectParams: SelectParams,
 	) {
 		super();
+		let { __foreignKeys, __primaryKeys }: { __foreignKeys: ForeignKey[], __primaryKeys: JoinablePrimaryKey[] } = <any>selectParams.from;
+		[__foreignKeys, __primaryKeys] = this.filterKeys(selectParams.fields, alias, __foreignKeys, __primaryKeys);
+		this.foreignKeys = __foreignKeys;
+		this.primaryKeys = __primaryKeys;
+	}
+	private filterKeys(fields: QueryColumn[] | undefined, alias: string, __foreignKeys: ForeignKey[], __primaryKeys: JoinablePrimaryKey[]): [ForeignKey[], JoinablePrimaryKey[]] {
+		if (fields) {
+			let fks = [];
+			let pks = [];
+			for (let field of fields) {
+				let fk = __foreignKeys.find(fk => field.columnFullName == fk.column.columnFullName);
+				let pk = __primaryKeys.find(pk => field.columnFullName == pk.column.columnFullName);
+				if (fk) fks.push({
+					column: new QueryColumn(null, alias, field.alias ? field.alias : field.columnName),
+					tableName: fk.tableName,
+					ambiguous: fk.ambiguous,
+				});
+				if (pk) pks.push({
+					column: new QueryColumn(null, alias, field.alias ? field.alias : field.columnName),
+					tableName: pk.tableName,
+					ambiguous: pk.ambiguous,
+				});
+			}
+			__foreignKeys = fks;
+			__primaryKeys = pks;
+		}
+		return [__foreignKeys, __primaryKeys];
 	}
 	protected get __foreignKeys(): ForeignKey[] {
-		return [];
+		return this.foreignKeys;
 	}
 	protected get __primaryKeys(): JoinablePrimaryKey[] {
-		return [];
+		return this.primaryKeys;
 	}
 	protected get __sqlFrom(): string {
-		return this.__sql;
-	}
-	public getColumn(col: string): QueryColumn {
-		return new QueryColumn(this.alias + "." + col);
+		return this.sql;
 	}
 }
 
 export class Select {
 	private __sql: string;
-	public constructor(selectParams: SelectParams) {
+	public constructor(private selectParams: SelectParams) {
 		this.__sql = this.computeSql(selectParams);
 	}
 	private computeSql(selectParams: SelectParams): string {
@@ -65,29 +92,29 @@ export class Select {
 		let orderByStr = "";
 		if (orderBy) {
 			if (Array.isArray(orderBy)) {
-				orderByStr = "ORDER BY " + orderBy.map((a) => a.column).join(",");
+				orderByStr = "ORDER BY " + orderBy.map((a) => a.columnFullName).join(",");
 			} else {
-				orderByStr = "ORDER BY " + orderBy.column;
+				orderByStr = "ORDER BY " + orderBy.columnFullName;
 			}
 		}
 	
 		let limit = limitSize ? `LIMIT ${limitOffset ? limitOffset + "," : ""}${limitSize}` : "";
 		let sql = `SELECT ${fields} FROM ${(<any>from).__sqlFrom} ${where} ${groupBy} ${having} ${orderByStr} ${limit}`;
 		
-		return sql.replace(/\s/gm, " ");
+		return sql.replace(/\s+/gm, " ");
 	}
 	public get sql(): string {
 		return this.__sql;
 	}
 	public asJoinable(alias: string): JoinableSelectWithFileds {
-		let j = new JoinableSelect("(" + this.__sql + ") AS " + alias, alias);
+		let j = new JoinableSelect("(" + this.__sql + ") AS " + alias, alias, this.selectParams);
 		const hasKey = <T extends object>(obj: T, k: keyof any): k is keyof T => k in obj;
 		let p = new Proxy(j, {
 			get: (target, key) => {
 				if (hasKey(target, key)) {
 					return target[key];
 				} else {
-					return new QueryColumn(alias + "." + key.toString());
+					return new QueryColumn(null, alias, key.toString());
 				}
 			},
 		});
