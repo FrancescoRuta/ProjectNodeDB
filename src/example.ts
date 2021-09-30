@@ -82,3 +82,79 @@ export class Comuni extends Table {
 		return this.id;
 	}
 }
+
+export class ChkinIngressi extends Table {
+	protected ___alias: string;
+	public constructor(alias?: string) {
+		super();
+		this.___alias = alias ?? this.__tableName;
+	}
+
+	protected get __foreignKeys(): ForeignKey[] {
+		return [
+			{
+				column: this.idUtente,
+				tableName: "mng_utenti",
+				ambiguous: false,
+			},
+		];
+	}
+
+	protected get __primaryKey(): QueryColumn {
+		return this.id;
+	}
+
+	protected get __tableName(): string {
+		return "chkin_ingressi";
+	}
+	protected get __alias(): string {
+		return this.___alias;
+	}
+
+	public get id(): QueryColumn {
+		return new QueryColumn("falegnameria", this.__alias, "id");
+	}
+
+	public get idUtente(): QueryColumn {
+		return new QueryColumn("falegnameria", this.__alias, "id_utente");
+	}
+
+	public get entrata(): QueryColumn {
+		return new QueryColumn("falegnameria", this.__alias, "entrata");
+	}
+
+	public get uscita(): QueryColumn {
+		return new QueryColumn("falegnameria", this.__alias, "uscita");
+	}
+}
+
+export class MngUtenti extends Table{
+	protected ___alias: string;
+	public constructor(alias?: string) {
+		super();
+		this.___alias = alias ?? this.__tableName;
+	}
+
+	protected get __foreignKeys(): ForeignKey[] {
+		return [];
+	}
+
+	protected get __primaryKey(): QueryColumn {
+		return this.id;
+	}
+
+	protected get __tableName(): string {
+		return "mng_utenti";
+	}
+	protected get __alias(): string {
+		return this.___alias;
+	}
+
+	public get id(): QueryColumn {
+		return new QueryColumn("falegnameria", this.__alias, "id");
+	}
+
+	public get username(): QueryColumn {
+		return new QueryColumn("falegnameria", this.__alias, "username");
+	}
+}

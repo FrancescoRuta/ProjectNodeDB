@@ -24,13 +24,16 @@ export function tokenizeSqlString(sql: string): Token[] {
 			ty: "NAMED_PLACEHOLDER",
 			regex: /^:[a-zA-Z\_\-0-9]+\:/g,
 		}, {
+			ty: "COLUMN_PLACEHOLDER",
+			regex: /^@[a-zA-Z\_\.\-0-9]+/g,
+		}, {
 			ty: "ANONYMOUS_PLACEHOLDER",
 			regex: /^\?/g,
 		}
 	]);
 }
 
-type TokenType = "STRING_LITERAL" | "NAMED_PLACEHOLDER" | "ANONYMOUS_PLACEHOLDER" | "OTHER";
+type TokenType = "STRING_LITERAL" | "NAMED_PLACEHOLDER" | "COLUMN_PLACEHOLDER" | "ANONYMOUS_PLACEHOLDER" | "OTHER";
 
 interface TokenRule {
 	ty: TokenType;

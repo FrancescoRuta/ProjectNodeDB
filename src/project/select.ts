@@ -1,22 +1,29 @@
 import { IDbEngine } from "./db_engine";
 import { DbInterfaceConfig } from "./db_interface";
-import { ForeignKey, Joinable, JoinablePrimaryKey, QueryColumn, SqlFrom } from "./entities";
+import {
+	ForeignKey,
+	Joinable,
+	JoinablePrimaryKey,
+	QueryColumn,
+	SqlFrom,
+} from "./entities";
 import { PreparedQuery } from "./prepared_query";
-import { getPositionalQuery } from "./sql_helper";
+import { getPositionalQuery, tokenizeSqlString } from "./sql_helper";
 
 export type JoinableSelectWithFileds = Joinable & {
-	[col: string]: QueryColumn
+	[col: string]: QueryColumn;
 };
 
 export interface SelectParams {
 	from: Joinable;
-	fields?: QueryColumn[];
+	fields?: QueryColumn | string | (QueryColumn | string)[];
 	where?: string;
-	groupBy?: string;
+	groupBy?: QueryColumn | string | (QueryColumn | string)[];
 	having?: string;
-	orderBy?: QueryColumn | QueryColumn[];
+	orderBy?: QueryColumn | string | (QueryColumn | string)[];
 	limitOffset?: number;
 	limitSize?: number;
+	entityParams: any;
 }
 
 class JoinableSelect extends Joinable {
@@ -25,31 +32,68 @@ class JoinableSelect extends Joinable {
 	public constructor(
 		private sql: string,
 		alias: string,
-		selectParams: SelectParams,
+		selectParams: SelectParams
 	) {
 		super();
-		let { __foreignKeys, __primaryKeys }: { __foreignKeys: ForeignKey[], __primaryKeys: JoinablePrimaryKey[] } = <any>selectParams.from;
-		[__foreignKeys, __primaryKeys] = this.filterKeys(selectParams.fields, alias, __foreignKeys, __primaryKeys);
+		let fields = selectParams.fields
+			? Array.isArray(selectParams.fields)
+				? selectParams.fields
+				: [selectParams.fields]
+			: undefined;
+		let {
+			__foreignKeys,
+			__primaryKeys,
+		}: {
+			__foreignKeys: ForeignKey[];
+			__primaryKeys: JoinablePrimaryKey[];
+		} = <any>selectParams.from;
+		[__foreignKeys, __primaryKeys] = this.filterKeys(
+			<QueryColumn[] | undefined>(
+				fields?.filter((f) => f instanceof QueryColumn)
+			),
+			alias,
+			__foreignKeys,
+			__primaryKeys
+		);
 		this.foreignKeys = __foreignKeys;
 		this.primaryKeys = __primaryKeys;
 	}
-	private filterKeys(fields: QueryColumn[] | undefined, alias: string, __foreignKeys: ForeignKey[], __primaryKeys: JoinablePrimaryKey[]): [ForeignKey[], JoinablePrimaryKey[]] {
+	private filterKeys(
+		fields: QueryColumn[] | undefined,
+		alias: string,
+		__foreignKeys: ForeignKey[],
+		__primaryKeys: JoinablePrimaryKey[]
+	): [ForeignKey[], JoinablePrimaryKey[]] {
 		if (fields) {
 			let fks = [];
 			let pks = [];
 			for (let field of fields) {
-				let fk = __foreignKeys.find(fk => field.columnFullName == fk.column.columnFullName);
-				let pk = __primaryKeys.find(pk => field.columnFullName == pk.column.columnFullName);
-				if (fk) fks.push({
-					column: new QueryColumn(null, alias, field.alias ? field.alias : field.columnName),
-					tableName: fk.tableName,
-					ambiguous: fk.ambiguous,
-				});
-				if (pk) pks.push({
-					column: new QueryColumn(null, alias, field.alias ? field.alias : field.columnName),
-					tableName: pk.tableName,
-					ambiguous: pk.ambiguous,
-				});
+				let fk = __foreignKeys.find(
+					(fk) => field.columnFullName == fk.column.columnFullName
+				);
+				let pk = __primaryKeys.find(
+					(pk) => field.columnFullName == pk.column.columnFullName
+				);
+				if (fk)
+					fks.push({
+						column: new QueryColumn(
+							null,
+							alias,
+							field.alias ? field.alias : field.columnName
+						),
+						tableName: fk.tableName,
+						ambiguous: fk.ambiguous,
+					});
+				if (pk)
+					pks.push({
+						column: new QueryColumn(
+							null,
+							alias,
+							field.alias ? field.alias : field.columnName
+						),
+						tableName: pk.tableName,
+						ambiguous: pk.ambiguous,
+					});
 			}
 			__foreignKeys = fks;
 			__primaryKeys = pks;
@@ -74,46 +118,97 @@ export class Select {
 		this.__sql = this.computeSql(selectParams);
 	}
 	private computeSql(selectParams: SelectParams): string {
-		let fields: string = selectParams.fields ? selectParams.fields.map(a => a.aliasedColumn).join(",") : "*";
-		let {
-			from,
-			limitOffset,
-			limitSize,
-			where,
-			groupBy,
-			having,
-			orderBy,
-		} = selectParams;
-	
-		where = where ? "WHERE " + where : "";
-		groupBy = groupBy ? "GROUP BY " + groupBy : "";
-		having = having ? "HAVING " + having : "";
-		let orderByStr = "";
-		if (orderBy) {
-			if (Array.isArray(orderBy)) {
-				orderByStr = "ORDER BY " + orderBy.map((a) => a.columnFullName).join(",");
-			} else {
-				orderByStr = "ORDER BY " + orderBy.columnFullName;
+		let fieldsArr = selectParams.fields ? (Array.isArray(selectParams.fields) ? selectParams.fields : [selectParams.fields]) : undefined;
+		let fields: string = fieldsArr? fieldsArr.map((a) => a instanceof QueryColumn ? a.aliasedColumn : a).join(",") : "*";
+		let { from, limitOffset, limitSize, where, groupBy, having, orderBy } = selectParams;
+
+		let limit = limitSize ? ` LIMIT ${limitOffset ? limitOffset + "," : ""}${limitSize}` : "";
+
+		let sql =
+			"SELECT " +
+			fields +
+			" FROM " +
+			(<any>from).__sqlFrom +
+			this.clauseToString("WHERE", where) +
+			this.clauseToString("GROUP BY", groupBy) +
+			this.clauseToString("HAVING", having) +
+			this.clauseToString("ORDER BY", orderBy) +
+			limit;
+
+		let tokens = tokenizeSqlString(sql);
+		sql = "";
+		for(let token of tokens){
+			if(token.ty == "COLUMN_PLACEHOLDER"){
+				let objectPathStr = token.value.substring(1);
+				let objectPath = objectPathStr.split(".");
+				let value = selectParams.entityParams;
+				for(let name of objectPath){
+					if(!value){
+						throw new Error(`Entity "${objectPathStr}" not found.`);
+					}
+					value = value[name];
+				}
+				if(!(value instanceof QueryColumn)){
+					throw new Error(`"${objectPathStr}" is not an entity.`);
+				}
+				sql += value.columnFullName;
+			}else{
+				sql += token.value;
 			}
 		}
-	
-		let limit = limitSize ? `LIMIT ${limitOffset ? limitOffset + "," : ""}${limitSize}` : "";
-		let sql = `SELECT ${fields} FROM ${(<any>from).__sqlFrom} ${where} ${groupBy} ${having} ${orderByStr} ${limit}`;
-		
-		return sql.replace(/\s+/gm, " ").replace(/\s*\(\s*/gm, " (").replace(/\s*\)\s*/gm, ") ").trim();
+		return sql
+			.replace(/\s+/gm, " ")
+			.replace(/\s*\(\s*/gm, "(")
+			.replace(/\s*\)\s*/gm, ")")
+			.trim();
+	}
+
+	private clauseToString(
+		clause: "GROUP BY" | "ORDER BY" | "WHERE" | "HAVING",
+		content: undefined | QueryColumn | string | (QueryColumn | string)[]
+	): string {
+		if (!content) return "";
+		let result: string;
+		if (Array.isArray(content)) {
+			result = content
+				.map((a) => (a instanceof QueryColumn ? a.columnFullName : a))
+				.join(",");
+		} else if (content instanceof QueryColumn) {
+			result = content.columnFullName;
+		} else {
+			result = content;
+		}
+
+		return ` ${clause} ${result}`;
 	}
 	public get sql(): string {
 		return this.__sql;
 	}
 	public asJoinable(alias?: string): JoinableSelectWithFileds {
 		if (!alias) alias = "JoinableSelect" + Select.aliasUid++;
-		return this.createJoinableProxy(alias, new JoinableSelect("(" + this.__sql + ") AS " + alias, alias, this.selectParams));
+		return this.createJoinableProxy(
+			alias,
+			new JoinableSelect(
+				"(" + this.__sql + ") AS " + alias,
+				alias,
+				this.selectParams
+			)
+		);
 	}
-	private createJoinableProxy(alias: string, joinableSelect: JoinableSelect): any {
+	private createJoinableProxy(
+		alias: string,
+		joinableSelect: JoinableSelect
+	): any {
 		return new Proxy(joinableSelect, {
 			get: (target: any, key) => {
 				let k = key.toString();
-				if (k.startsWith("__") || k == "innerJoin" || k == "leftJoin" || k == "rightJoin" || k == "naturalJoin") {
+				if (
+					k.startsWith("__") ||
+					k == "innerJoin" ||
+					k == "leftJoin" ||
+					k == "rightJoin" ||
+					k == "naturalJoin"
+				) {
 					return target[key];
 				} else {
 					return new QueryColumn(null, alias, k);
@@ -128,39 +223,74 @@ export class Select {
 		let [sql, paramNames] = getPositionalQuery(this.sql);
 		return new PreparedSelect(dbInterfaceConfig.dbEngine, sql, paramNames);
 	}
-	public preparePaged(dbInterfaceConfig: DbInterfaceConfig): PreparedSelectPaged {
-		if (this.hasHardLimit) throw new Error("Pagination is not allowed for selects with hard limit.");
+	public preparePaged(
+		dbInterfaceConfig: DbInterfaceConfig
+	): PreparedSelectPaged {
+		if (this.hasHardLimit)
+			throw new Error(
+				"Pagination is not allowed for selects with hard limit."
+			);
 		let [sql, paramNames] = getPositionalQuery(this.sql);
-		return new PreparedSelectPaged(dbInterfaceConfig.dbEngine, dbInterfaceConfig.getLimitByPageIndex, sql, paramNames);
+		return new PreparedSelectPaged(
+			dbInterfaceConfig.dbEngine,
+			dbInterfaceConfig.getLimitByPageIndex,
+			sql,
+			paramNames
+		);
 	}
-	
 }
 
 export class PreparedSelect extends PreparedQuery {
-	public constructor(private dbEngine: IDbEngine, private sql: string, private paramNames: string[]) {
+	public constructor(
+		private dbEngine: IDbEngine,
+		private sql: string,
+		private paramNames: string[]
+	) {
 		super();
 	}
-	
+
 	public run(params: any): Promise<any[]> {
 		if (Array.isArray(params)) {
 			return this.dbEngine.executeSelect(this.sql, params);
 		} else {
-			return this.dbEngine.executeSelect(this.sql, this.paramNames.map(p => params[p]));
+			return this.dbEngine.executeSelect(
+				this.sql,
+				this.paramNames.map((p) => params[p])
+			);
 		}
 	}
 }
 
 export class PreparedSelectPaged extends PreparedQuery {
-	public constructor(private dbEngine: IDbEngine, private getLimitByPageIndex: (pageIndex: number) => [number, number], private sql: string, private paramNames: string[]) {
+	public constructor(
+		private dbEngine: IDbEngine,
+		private getLimitByPageIndex: (pageIndex: number) => [number, number],
+		private sql: string,
+		private paramNames: string[]
+	) {
 		super();
 		this.sql += " LIMIT ?,?";
 	}
-	
-	public run({params, pageIndex}: {params: any, pageIndex: number}): Promise<any[]> {
+
+	public run({
+		params,
+		pageIndex,
+	}: {
+		params: any;
+		pageIndex: number;
+	}): Promise<any[]> {
 		if (Array.isArray(params)) {
-			return this.dbEngine.executeSelect(this.sql, params.concat(this.getLimitByPageIndex(pageIndex)));
+			return this.dbEngine.executeSelect(
+				this.sql,
+				params.concat(this.getLimitByPageIndex(pageIndex))
+			);
 		} else {
-			return this.dbEngine.executeSelect(this.sql, this.paramNames.map(p => params[p]).concat(this.getLimitByPageIndex(pageIndex)));
+			return this.dbEngine.executeSelect(
+				this.sql,
+				this.paramNames
+					.map((p) => params[p])
+					.concat(this.getLimitByPageIndex(pageIndex))
+			);
 		}
 	}
 }
