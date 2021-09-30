@@ -2,7 +2,6 @@ import { createPool } from "mysql2/promise";
 import * as config from "./config";
 import { QueryColumn, SqlFrom } from "./entities";
 
-
 export const connectionPool = createPool({
 	host: "localhost",
 	user: "prove",
@@ -13,7 +12,7 @@ export const connectionPool = createPool({
 
 export interface SelectParams {
 	from: SqlFrom;
-	fields?: QueryColumn[]; 
+	fields?: QueryColumn[];
 	where?: string;
 	groupBy?: string;
 	having?: string;
@@ -24,7 +23,7 @@ export interface SelectParams {
 	params?: any;
 }
 
-export async function query(sql: string, params?: any): Promise<any[]>{
+export async function query(sql: string, params?: any): Promise<any[]> {
 	let connection = await connectionPool.getConnection();
 	let result = await connection.execute(sql, params);
 	connection.release();
@@ -32,28 +31,43 @@ export async function query(sql: string, params?: any): Promise<any[]>{
 }
 
 export async function select(selectParams: SelectParams): Promise<any[]> {
-	let fields: string = (selectParams.fields) ? selectParams.fields.map(a => a.aliasedColumn).join(",") : "*";
+	let fields: string = selectParams.fields
+		? selectParams.fields.map((a) => a.aliasedColumn).join(",")
+		: "*";
 
-	let {from, limitOffset, limitSize, where, groupBy, having, orderBy, params} = selectParams;
-	if (!limitSize && selectParams.pageIndex){
+	let {
+		from,
+		limitOffset,
+		limitSize,
+		where,
+		groupBy,
+		having,
+		orderBy,
+		params,
+	} = selectParams;
+	if (!limitSize && selectParams.pageIndex) {
 		limitOffset = config.PAGE_SIZE * selectParams.pageIndex;
 		limitSize = config.PAGE_SIZE;
 	}
 
-	where = where ? "WHERE " + where : ""; 
+	where = where ? "WHERE " + where : "";
 	groupBy = groupBy ? "GROUP BY " + groupBy : "";
 	having = having ? "HAVING " + having : "";
 	let orderByStr = "";
-	if(orderBy){
-		if(Array.isArray(orderBy)){
-			orderByStr = "ORDER BY " + orderBy.map(a => a.column).join(",");
-		}else{
-			orderByStr = "ORDER BY " + orderBy.column;	
+	if (orderBy) {
+		if (Array.isArray(orderBy)) {
+			orderByStr = "ORDER BY " + orderBy.map((a) => a.column).join(",");
+		} else {
+			orderByStr = "ORDER BY " + orderBy.column;
 		}
 	}
-	
-	let limit = limitSize ? `LIMIT ${limitOffset ? limitOffset + "," : ""}${limitSize}` : "";
-	let sql = `SELECT ${fields} FROM ${(<any>from).__sqlFrom} ${where} ${groupBy} ${having} ${orderByStr} ${limit}`;
+
+	let limit = limitSize
+		? `LIMIT ${limitOffset ? limitOffset + "," : ""}${limitSize}`
+		: "";
+	let sql = `SELECT ${fields} FROM ${
+		(<any>from).__sqlFrom
+	} ${where} ${groupBy} ${having} ${orderByStr} ${limit}`;
 	console.log(sql);
 	return query(sql, params);
 }
