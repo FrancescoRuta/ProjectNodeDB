@@ -1,7 +1,6 @@
-import { createPool } from "mysql2/promise";
 import * as config from "./config";
 import { QueryColumn, SqlFrom } from "./entities";
-
+/*
 export const connectionPool = createPool({
 	host: "localhost",
 	user: "prove",
@@ -9,7 +8,7 @@ export const connectionPool = createPool({
 	database: "prove",
 	namedPlaceholders: true,
 });
-
+*/
 export interface SelectParams {
 	from: SqlFrom;
 	fields?: QueryColumn[];
@@ -24,10 +23,11 @@ export interface SelectParams {
 }
 
 export async function query(sql: string, params?: any): Promise<any[]> {
-	let connection = await connectionPool.getConnection();
+	/*let connection = await connectionPool.getConnection();
 	let result = await connection.execute(sql, params);
 	connection.release();
-	return <any>result[0];
+	return <any>result[0];*/
+	return [];
 }
 
 export async function select(selectParams: SelectParams): Promise<any[]> {
