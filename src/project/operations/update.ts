@@ -4,19 +4,22 @@ import { QueryColumn, Table } from "../entities";
 import { PreparedQuery } from "../prepared_query";
 import { getPositionalQuery, replaceColumnPlaceholders } from "../sql_helper";
 
-export type UpdateParams = Table | {
+export type UpdateParams<D> = Table | {
 	table: Table;
 	fields?: QueryColumn | QueryColumn[];
 	where?: string;
+	dbEngineArgs?: D;
 }
 
-export class Update {
+export class Update<D> {
 	private sql: string;
 	private paramNames: string[];
+	private dbEngineArgs: D | undefined;
 	
-	public constructor(updateParams: UpdateParams) {
+	public constructor(updateParams: UpdateParams<D>) {
 		if (updateParams instanceof Table) updateParams = {table: updateParams};
-		let { table, fields, where } = updateParams;
+		let { table, fields, where, dbEngineArgs } = updateParams;
+		this.dbEngineArgs = dbEngineArgs;
 		let tableName: string = (<any>table).__tableName;
 		let primaryKey: QueryColumn = (<any>table).__primaryKey;
 		if (!fields) {
@@ -36,19 +39,20 @@ export class Update {
 		sql = replaceColumnPlaceholders(sql, table);
 		[this.sql, this.paramNames] = getPositionalQuery(sql);
 	}
-	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T>, executeBefore: ExecuteBefore<void>): PreparedUpdate {
-		return new PreparedUpdate(dbInterfaceConfig.dbEngine, this.sql, this.paramNames, executeBefore);
+	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T, D>, executeBefore: ExecuteBefore<void>): PreparedUpdate<D> {
+		return new PreparedUpdate(dbInterfaceConfig.dbEngine, this.sql, this.paramNames, executeBefore, this.dbEngineArgs);
 	}
 	
 }
 
-export class PreparedUpdate extends PreparedQuery {
+export class PreparedUpdate<D> extends PreparedQuery {
 	private paramIndexes: number[];
 	public constructor(
-		private dbEngine: IDbEngine,
+		private dbEngine: IDbEngine<D>,
 		private sql: string,
 		private paramNames: string[],
 		private executeBefore: ExecuteBefore<void>,
+		private dbEngineArgs: D | undefined,
 	) {
 		super();
 		this.paramIndexes = paramNames.map((_, i) => i);
@@ -57,12 +61,13 @@ export class PreparedUpdate extends PreparedQuery {
 	public run(params?: any): Promise<any> {
 		if (Array.isArray(params)) {
 			this.executeBefore({params, paramNames: this.paramIndexes, queryType: "UPDATE"});
-			return this.dbEngine.execute(this.sql, params);
+			return this.dbEngine.execute(this.sql, params, this.dbEngineArgs);
 		} else {
 			this.executeBefore({params, paramNames: this.paramNames, queryType: "UPDATE"});
 			return this.dbEngine.execute(
 				this.sql,
-				this.paramNames.map((p) => params[p])
+				this.paramNames.map((p) => params[p]),
+				this.dbEngineArgs
 			);
 		}
 	}

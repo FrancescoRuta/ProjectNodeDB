@@ -3,8 +3,8 @@ import { IDbEngine } from "../project/db_engine";
 import { DbInterface, ExecuteBefore } from "../project/db_interface";
 import { exposeDbApi } from "./api";
 
-class DbEngine implements IDbEngine {
-	async execute(sql: string, params: any[]): Promise<any> {
+class DbEngine implements IDbEngine<void> {
+	async execute(sql: string, params: any[], _dbEngineArgs: void | undefined): Promise<any> {
 		try {
 			console.log(sql, params);
 			await connectionPool.execute(sql, params);
@@ -12,7 +12,7 @@ class DbEngine implements IDbEngine {
 			console.error(error);
 		}
 	}
-	async executeSelect(sql: string, params: any[]): Promise<any[]> {
+	async executeSelect(sql: string, params: any[], _dbEngineArgs: void | undefined): Promise<any[]> {
 		try {
 			console.log(sql, params);
 			let result = await connectionPool.execute(sql, params);

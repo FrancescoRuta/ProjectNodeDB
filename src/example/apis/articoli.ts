@@ -14,7 +14,7 @@ db.exposeSelectPaged("/articoli/get", {
 		unitaDiMisura.simbolo.as("unitaDiMisura"),
 		classificazione.value.as("classificazione"),
 	],
-	where: "@codice like :codice:"
+	where: "@codice like :codice:",
 });
 
 db.exposeInsert("/articoli/add", articoli);

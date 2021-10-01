@@ -4,18 +4,21 @@ import { QueryColumn, Table } from "../entities";
 import { PreparedQuery } from "../prepared_query";
 import { getPositionalQuery, replaceColumnPlaceholders } from "../sql_helper";
 
-export type DeleteParams = Table | {
+export type DeleteParams<D> = Table | {
 	table: Table;
 	where?: string;
+	dbEngineArgs?: D;
 }
 
-export class Delete {
+export class Delete<D> {
 	private sql: string;
 	private paramNames: string[];
+	private dbEngineArgs: D | undefined;
 	
-	public constructor(deleteParams: DeleteParams) {
+	public constructor(deleteParams: DeleteParams<D>) {
 		if (deleteParams instanceof Table) deleteParams = {table: deleteParams};
-		let { table, where } = deleteParams;
+		let { table, where, dbEngineArgs } = deleteParams;
+		this.dbEngineArgs = dbEngineArgs;
 		let tableName: string = (<any>table).__tableName;
 		let primaryKey: QueryColumn = (<any>table).__primaryKey;
 		if (!where) {
@@ -25,19 +28,20 @@ export class Delete {
 		sql = replaceColumnPlaceholders(sql, table);
 		[this.sql, this.paramNames] = getPositionalQuery(sql);
 	}
-	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T>, executeBefore: ExecuteBefore<void>): PreparedDelete {
-		return new PreparedDelete(dbInterfaceConfig.dbEngine, this.sql, this.paramNames, executeBefore);
+	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T, D>, executeBefore: ExecuteBefore<void>): PreparedDelete<D> {
+		return new PreparedDelete(dbInterfaceConfig.dbEngine, this.sql, this.paramNames, executeBefore, this.dbEngineArgs);
 	}
 	
 }
 
-export class PreparedDelete extends PreparedQuery {
+export class PreparedDelete<D> extends PreparedQuery {
 	private paramIndexes: number[];
 	public constructor(
-		private dbEngine: IDbEngine,
+		private dbEngine: IDbEngine<D>,
 		private sql: string,
 		private paramNames: string[],
-		private executeBefore: ExecuteBefore<void>
+		private executeBefore: ExecuteBefore<void>,
+		private dbEngineArgs: D | undefined,
 	) {
 		super();
 		this.paramIndexes = paramNames.map((_, i) => i);
@@ -46,12 +50,13 @@ export class PreparedDelete extends PreparedQuery {
 	public run(params?: any): Promise<any> {
 		if (Array.isArray(params)) {
 			this.executeBefore({params, paramNames: this.paramIndexes, queryType: "DELETE"});
-			return this.dbEngine.execute(this.sql, params);
+			return this.dbEngine.execute(this.sql, params, this.dbEngineArgs);
 		} else {
 			this.executeBefore({params, paramNames: this.paramNames, queryType: "DELETE"});
 			return this.dbEngine.execute(
 				this.sql,
-				this.paramNames.map((p) => params[p])
+				this.paramNames.map((p) => params[p]),
+				this.dbEngineArgs
 			);
 		}
 	}

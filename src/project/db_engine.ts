@@ -1,4 +1,4 @@
-export interface IDbEngine {
-	executeSelect(sql: string, params: any[]): Promise<any[]>;
-	execute(sql: string, params: any[]): Promise<any>;
+export interface IDbEngine<D> {
+	executeSelect(sql: string, params: any[], dbEngineArgs: D | undefined): Promise<any[]>;
+	execute(sql: string, params: any[], dbEngineArgs: D | undefined): Promise<any>;
 }

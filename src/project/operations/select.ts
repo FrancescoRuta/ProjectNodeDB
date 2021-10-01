@@ -14,7 +14,7 @@ export type JoinableSelectWithFileds = Joinable & {
 	[col: string]: QueryColumn;
 };
 
-export interface SelectParams {
+export interface SelectParams<D> {
 	from: Joinable;
 	fields?: QueryColumn | string | (QueryColumn | string)[];
 	where?: string;
@@ -24,15 +24,16 @@ export interface SelectParams {
 	limitOffset?: number;
 	limitSize?: number;
 	additionalBindableEntities?: any;
+	dbEngineArgs?: D;
 }
 
-class JoinableSelect extends Joinable {
+class JoinableSelect<D> extends Joinable {
 	private foreignKeys: ForeignKey[];
 	private primaryKeys: JoinablePrimaryKey[];
 	public constructor(
 		private sql: string,
 		alias: string,
-		selectParams: SelectParams,
+		selectParams: SelectParams<D>,
 		private entityBindings: any,
 	) {
 		super();
@@ -117,14 +118,14 @@ class JoinableSelect extends Joinable {
 	}
 }
 
-export class Select extends BindableEnity {
+export class Select<D> extends BindableEnity {
 	private __sql: string;
 	private static aliasUid = 0;
-	public constructor(private selectParams: SelectParams) {
+	public constructor(private selectParams: SelectParams<D>) {
 		super();
 		this.__sql = this.computeSql(selectParams);
 	}
-	private computeSql(selectParams: SelectParams): string {
+	private computeSql(selectParams: SelectParams<D>): string {
 		let fieldsArr = selectParams.fields ? (Array.isArray(selectParams.fields) ? selectParams.fields : [selectParams.fields]) : undefined;
 		let fields: string = fieldsArr? fieldsArr.map((a) => a instanceof QueryColumn ? a.aliasedColumn : a).join(",") : "*";
 		let { from, limitOffset, limitSize, where, groupBy, having, orderBy } = selectParams;
@@ -185,7 +186,7 @@ export class Select extends BindableEnity {
 	}
 	private createJoinableProxy(
 		alias: string,
-		joinableSelect: JoinableSelect
+		joinableSelect: JoinableSelect<D>
 	): any {
 		return new Proxy(joinableSelect, {
 			get: (target: any, key) => {
@@ -207,11 +208,11 @@ export class Select extends BindableEnity {
 	public get hasHardLimit(): boolean {
 		return this.selectParams.limitSize != null;
 	}
-	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T>, executeBefore: ExecuteBefore<void>): PreparedSelect {
+	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T, D>, executeBefore: ExecuteBefore<void>): PreparedSelect<D> {
 		let [sql, paramNames] = getPositionalQuery(this.__sql);
-		return new PreparedSelect(dbInterfaceConfig.dbEngine, sql, paramNames, executeBefore);
+		return new PreparedSelect(dbInterfaceConfig.dbEngine, sql, paramNames, executeBefore, this.selectParams.dbEngineArgs);
 	}
-	public preparePaged<T>(dbInterfaceConfig: DbInterfaceConfig<T>, executeBefore: ExecuteBefore<number | undefined>): PreparedSelectPaged {
+	public preparePaged<T>(dbInterfaceConfig: DbInterfaceConfig<T, D>, executeBefore: ExecuteBefore<number | undefined>): PreparedSelectPaged<D> {
 		if (this.hasHardLimit)
 			throw new Error(
 				"Pagination is not allowed for selects with hard limit."
@@ -223,7 +224,8 @@ export class Select extends BindableEnity {
 			dbInterfaceConfig.getLimitByPageIndex,
 			sql,
 			paramNames,
-			executeBefore
+			executeBefore,
+			this.selectParams.dbEngineArgs
 		);
 	}
 	protected get __enityBinding(): string {
@@ -231,13 +233,14 @@ export class Select extends BindableEnity {
 	}
 }
 
-export class PreparedSelect extends PreparedQuery {
+export class PreparedSelect<D> extends PreparedQuery {
 	private paramIndexes: number[];
 	public constructor(
-		private dbEngine: IDbEngine,
+		private dbEngine: IDbEngine<D>,
 		private sql: string,
 		private paramNames: string[],
 		private executeBefore: ExecuteBefore<void>,
+		private dbEngineArgs: D | undefined,
 	) {
 		super();
 		this.paramIndexes = paramNames.map((_, i) => i);
@@ -246,26 +249,28 @@ export class PreparedSelect extends PreparedQuery {
 	public run(params?: any): Promise<any[]> {
 		if (Array.isArray(params)) {
 			this.executeBefore({params, paramNames: this.paramIndexes, queryType: "SELECT"});
-			return this.dbEngine.executeSelect(this.sql, params);
+			return this.dbEngine.executeSelect(this.sql, params, this.dbEngineArgs);
 		} else {
 			this.executeBefore({params, paramNames: this.paramNames, queryType: "SELECT"});
 			return this.dbEngine.executeSelect(
 				this.sql,
-				this.paramNames.map((p) => params[p])
+				this.paramNames.map((p) => params[p]),
+				this.dbEngineArgs
 			);
 		}
 	}
 }
 
-export class PreparedSelectPaged extends PreparedQuery {
+export class PreparedSelectPaged<D> extends PreparedQuery {
 	private paramIndexes: number[];
 	public constructor(
-		private dbEngine: IDbEngine,
+		private dbEngine: IDbEngine<D>,
 		private pageIndexParam: string,
 		private getLimitByPageIndex: (pageIndex: number) => [number, number],
 		private sql: string,
 		private paramNames: string[],
 		private executeBefore: ExecuteBefore<number | undefined>,
+		private dbEngineArgs: D | undefined,
 	) {
 		super();
 		this.paramIndexes = paramNames.map((_, i) => i);
@@ -281,7 +286,8 @@ export class PreparedSelectPaged extends PreparedQuery {
 			if (pageIndex < 0) pageIndex = 0;
 			return this.dbEngine.executeSelect(
 				this.sql,
-				params.concat(this.getLimitByPageIndex(pageIndex))
+				params.concat(this.getLimitByPageIndex(pageIndex)),
+				this.dbEngineArgs
 			);
 		} else {
 			let pageIndex = params[this.pageIndexParam];
@@ -293,7 +299,8 @@ export class PreparedSelectPaged extends PreparedQuery {
 				this.sql,
 				this.paramNames
 					.map((p) => params[p])
-					.concat(this.getLimitByPageIndex(pageIndex))
+					.concat(this.getLimitByPageIndex(pageIndex)),
+					this.dbEngineArgs
 			);
 		}
 	}
