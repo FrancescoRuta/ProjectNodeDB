@@ -16,9 +16,14 @@ export interface JoinablePrimaryKey {
 	ambiguous: boolean;
 }
 
-export class QueryColumn {
+export abstract class BindableEnity {
+	protected abstract get __enityBinding(): string;
+}
+
+export class QueryColumn extends BindableEnity {
 	private __alias: string | null;
 	public constructor(private db: string | null, private table: string | null, private col: string) {
+		super()
 		this.__alias = null;
 	}
 	public get columnName(): string {
@@ -41,6 +46,9 @@ export class QueryColumn {
 		q.__alias = alias;
 		return q;
 	}
+	protected get __enityBinding(): string {
+		return this.columnFullName;
+	}
 }
 
 export abstract class SqlFrom {
@@ -48,6 +56,7 @@ export abstract class SqlFrom {
 }
 
 export abstract class Joinable extends SqlFrom {
+	protected abstract get __entityBindings(): any;
 	protected abstract get __foreignKeys(): ForeignKey[];
 	protected abstract get __primaryKeys(): JoinablePrimaryKey[];
 
@@ -77,7 +86,8 @@ export abstract class Joinable extends SqlFrom {
 		return new JoinResult(
 			this.__joinKeys(this.__foreignKeys, other.__foreignKeys),
 			this.__joinKeys(this.__primaryKeys, other.__primaryKeys),
-			sql
+			sql,
+			{...this.__entityBindings, ...other.__entityBindings},
 		);
 	}
 
@@ -115,7 +125,8 @@ export abstract class Joinable extends SqlFrom {
 		return new JoinResult(
 			this.__joinKeys(this.__foreignKeys, other.__foreignKeys),
 			this.__joinKeys(this.__primaryKeys, other.__primaryKeys),
-			sql
+			sql,
+			{...this.__entityBindings, ...other.__entityBindings},
 		);
 	}
 
@@ -180,7 +191,8 @@ export class JoinResult extends Joinable {
 	public constructor(
 		private foreignKeys: ForeignKey[],
 		private primaryKeys: JoinablePrimaryKey[],
-		private sqlFrom: string
+		private sqlFrom: string,
+		private entityBindings: any,
 	) {
 		super();
 	}
@@ -192,6 +204,9 @@ export class JoinResult extends Joinable {
 	}
 	protected get __sqlFrom(): string {
 		return this.sqlFrom;
+	}
+	protected get __entityBindings(): any {
+		return this.entityBindings;
 	}
 }
 
@@ -212,5 +227,10 @@ export abstract class Table extends Joinable {
 		return this.__tableName == this.__alias
 			? this.__tableName
 			: this.__tableName + " AS " + this.__alias;
+	}
+	protected get __entityBindings(): any {
+		let entityBinding: any = {};
+		entityBinding[this.__alias] = this;
+		return entityBinding;
 	}
 }

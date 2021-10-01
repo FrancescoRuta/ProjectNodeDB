@@ -14,4 +14,5 @@ db.exposeSelectPaged("/articoli/get", {
 		unitaDiMisura.simbolo.as("unitaDiMisura"),
 		classificazione.value.as("classificazione"),
 	],
+	where: "@id < 5 AND @codice like 'cane'"
 });

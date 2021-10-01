@@ -1,4 +1,4 @@
-import { QueryColumn } from "./entities";
+import { BindableEnity } from "./entities";
 
 export function getPositionalQuery(sql: string): [string, string[]] {
 	let tokens = tokenizeSqlString(sql);
@@ -42,21 +42,60 @@ export function replaceColumnPlaceholders(sql: string, entityParams: any) {
 			let objectPathStr = token.value.substring(1);
 			let objectPath = objectPathStr.split(".");
 			let value = entityParams;
-			for(let name of objectPath){
-				if(!value){
-					throw new Error(`Entity "${objectPathStr}" not found.`);
-				}
-				value = value[name];
+			let prevValue, lastPathPart: string;
+			for(let i = 0; i < objectPath.length; ++i) {
+				if(!value) throw new Error(`Entity "${objectPathStr}" not found.`);
+				prevValue = value;
+				lastPathPart = objectPath[i];
+				value = value[lastPathPart];
 			}
-			if(!(value instanceof QueryColumn)){
-				throw new Error(`"${objectPathStr}" is not an entity.`);
+			if (!value) {
+				let bindableEnities = findAllBindableEnities(prevValue);
+				let bindableEnity = bindableEnities[lastPathPart!];
+				if (!bindableEnity) throw new Error(`Entity "${objectPathStr}" not found.`);
+				if (bindableEnity.ambiguous) throw new Error(`Entity "${objectPathStr}" is ambiguous, use full entity path.`);
+				sql += (<any>bindableEnity.entity).__enityBinding;
+			} else {
+				if(!(value instanceof BindableEnity)) throw new Error(`"${objectPathStr}" is not a parametrizable entity.`);
+				sql += (<any>value).__enityBinding;
 			}
-			sql += value.columnFullName;
+			
 		}else{
 			sql += token.value;
 		}
 	}
 	return sql;
+}
+
+function findAllBindableEnities(value: any, name?: string): {[name: string]: {entity: BindableEnity, ambiguous: boolean}} {
+	if (value instanceof BindableEnity) {
+		let object: any = {};
+		object[name!] = {entity: value, ambiguous: false};
+		return object;
+	}
+	let bindableEnities: {[name: string]: {entity: BindableEnity, ambiguous: boolean}} = {};
+	let keys: string[];
+	if (isPlainObject(value)) {
+		keys = Object.keys(value);
+	} else {
+		keys = Object.getOwnPropertyNames(Object.getPrototypeOf(value)).filter(k => !k.startsWith("__") && k != "constructor");
+	}
+	for (let key of keys) {
+		let subBindableEnities = findAllBindableEnities(value[key], key);
+		for (let name in subBindableEnities) {
+			if (bindableEnities[name]) {
+				bindableEnities[name].ambiguous = true;
+			} else {
+				bindableEnities[name] = subBindableEnities[name];
+			}
+		}
+	}
+	return bindableEnities;
+}
+
+function isPlainObject(obj: any): boolean {
+	const prototype = Object.getPrototypeOf(obj);
+	return  prototype === Object.getPrototypeOf({}) || prototype === null;
 }
 
 type TokenType = "STRING_LITERAL" | "NAMED_PLACEHOLDER" | "COLUMN_PLACEHOLDER" | "ANONYMOUS_PLACEHOLDER" | "OTHER";

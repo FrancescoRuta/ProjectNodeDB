@@ -1,6 +1,7 @@
 import { IDbEngine } from "../db_engine";
 import { DbInterfaceConfig, ExecuteBefore } from "../db_interface";
 import {
+	BindableEnity,
 	ForeignKey,
 	Joinable,
 	JoinablePrimaryKey,
@@ -22,7 +23,7 @@ export interface SelectParams {
 	orderBy?: QueryColumn | string | (QueryColumn | string)[];
 	limitOffset?: number;
 	limitSize?: number;
-	entityParams?: any;
+	additionalBindableEntities?: any;
 }
 
 class JoinableSelect extends Joinable {
@@ -31,7 +32,8 @@ class JoinableSelect extends Joinable {
 	public constructor(
 		private sql: string,
 		alias: string,
-		selectParams: SelectParams
+		selectParams: SelectParams,
+		private entityBindings: any,
 	) {
 		super();
 		let fields = selectParams.fields
@@ -99,6 +101,9 @@ class JoinableSelect extends Joinable {
 		}
 		return [__foreignKeys, __primaryKeys];
 	}
+	protected get __entityBindings(): any {
+		return this.entityBindings;
+	}
 	protected get __foreignKeys(): ForeignKey[] {
 		return this.foreignKeys;
 	}
@@ -110,10 +115,11 @@ class JoinableSelect extends Joinable {
 	}
 }
 
-export class Select {
+export class Select extends BindableEnity {
 	private __sql: string;
 	private static aliasUid = 0;
 	public constructor(private selectParams: SelectParams) {
+		super();
 		this.__sql = this.computeSql(selectParams);
 	}
 	private computeSql(selectParams: SelectParams): string {
@@ -135,7 +141,7 @@ export class Select {
 			limit;
 
 		
-		return replaceColumnPlaceholders(sql, selectParams.entityParams)
+		return replaceColumnPlaceholders(sql, {...(<any>from).__entityBindings, ...selectParams.additionalBindableEntities})
 			.replace(/\s+/gm, " ")
 			.replace(/\s*\(\s*/gm, "(")
 			.replace(/\s*\)\s*/gm, ")")
@@ -160,19 +166,20 @@ export class Select {
 
 		return ` ${clause} ${result}`;
 	}
-	public get sql(): string {
-		return this.__sql;
-	}
 	public asJoinable(alias?: string): JoinableSelectWithFileds {
 		if (!alias) alias = "JoinableSelect" + Select.aliasUid++;
-		return this.createJoinableProxy(
+		let entityBinding: any = {};
+		let res = this.createJoinableProxy(
 			alias,
 			new JoinableSelect(
 				"(" + this.__sql + ") AS " + alias,
 				alias,
-				this.selectParams
+				this.selectParams,
+				entityBinding
 			)
 		);
+		entityBinding[alias] = res;
+		return res;
 	}
 	private createJoinableProxy(
 		alias: string,
@@ -199,7 +206,7 @@ export class Select {
 		return this.selectParams.limitSize != null;
 	}
 	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T>, executeBefore: ExecuteBefore<void>): PreparedSelect {
-		let [sql, paramNames] = getPositionalQuery(this.sql);
+		let [sql, paramNames] = getPositionalQuery(this.__sql);
 		return new PreparedSelect(dbInterfaceConfig.dbEngine, sql, paramNames, executeBefore);
 	}
 	public preparePaged<T>(dbInterfaceConfig: DbInterfaceConfig<T>, executeBefore: ExecuteBefore<number | undefined>): PreparedSelectPaged {
@@ -207,7 +214,7 @@ export class Select {
 			throw new Error(
 				"Pagination is not allowed for selects with hard limit."
 			);
-		let [sql, paramNames] = getPositionalQuery(this.sql);
+		let [sql, paramNames] = getPositionalQuery(this.__sql);
 		return new PreparedSelectPaged(
 			dbInterfaceConfig.dbEngine,
 			dbInterfaceConfig.pageIndexParam,
@@ -216,6 +223,9 @@ export class Select {
 			paramNames,
 			executeBefore
 		);
+	}
+	protected get __enityBinding(): string {
+		return `(${this.__sql})`;
 	}
 }
 
