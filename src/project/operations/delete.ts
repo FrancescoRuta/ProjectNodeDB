@@ -25,7 +25,7 @@ export class Delete {
 		sql = replaceColumnPlaceholders(sql, table);
 		[this.sql, this.paramNames] = getPositionalQuery(sql);
 	}
-	public prepare(dbInterfaceConfig: DbInterfaceConfig, executeBefore: ExecuteBefore<void>): PreparedDelete {
+	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T>, executeBefore: ExecuteBefore<void>): PreparedDelete {
 		return new PreparedDelete(dbInterfaceConfig.dbEngine, this.sql, this.paramNames, executeBefore);
 	}
 	

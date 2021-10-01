@@ -8,15 +8,16 @@ import { PreparedQuery } from "./prepared_query";
 
 export type ExecuteBefore<T> = (params: any) => T;
 
-export interface DbInterfaceConfig {
+export interface DbInterfaceConfig<T> {
 	dbEngine: IDbEngine;
+	pageIndexParam: string;
 	getLimitByPageIndex: (pageIndex: number) => [number, number];
-	expose: (path: string, preparedQuery: PreparedQuery) => void;
+	expose: (options: T, preparedQuery: PreparedQuery) => void;
 }
 
-export class DbInterface {
+export class DbInterface<T> {
 	
-	public constructor(private config: DbInterfaceConfig) {}
+	public constructor(private config: DbInterfaceConfig<T>) {}
 	
 	public prepareInsert(insertParams: InsertParams, executeBefore?: ExecuteBefore<void>): PreparedInsert {
 		return new Insert(insertParams).prepare(this.config, executeBefore ?? (() => {}));
@@ -38,24 +39,24 @@ export class DbInterface {
 		return new Select(selectParams).preparePaged(this.config, executeBefore ?? (() => undefined));
 	}
 	
-	public exposeInsert(path: string, insertParams: InsertParams, executeBefore?: ExecuteBefore<void>): void {
-		this.config.expose(path, new Insert(insertParams).prepare(this.config, executeBefore ?? (() => {})));
+	public exposeInsert(options: T, insertParams: InsertParams, executeBefore?: ExecuteBefore<void>): void {
+		this.config.expose(options, new Insert(insertParams).prepare(this.config, executeBefore ?? (() => {})));
 	}
 	
-	public exposeUpdate(path: string, updateParams: UpdateParams, executeBefore?: ExecuteBefore<void>): void {
-		this.config.expose(path, new Update(updateParams).prepare(this.config, executeBefore ?? (() => {})));
+	public exposeUpdate(options: T, updateParams: UpdateParams, executeBefore?: ExecuteBefore<void>): void {
+		this.config.expose(options, new Update(updateParams).prepare(this.config, executeBefore ?? (() => {})));
 	}
 	
-	public exposeDelete(path: string, deleteParams: DeleteParams, executeBefore?: ExecuteBefore<void>): void {
-		this.config.expose(path, new Delete(deleteParams).prepare(this.config, executeBefore ?? (() => {})));
+	public exposeDelete(options: T, deleteParams: DeleteParams, executeBefore?: ExecuteBefore<void>): void {
+		this.config.expose(options, new Delete(deleteParams).prepare(this.config, executeBefore ?? (() => {})));
 	}
 	
-	public exposeSelect(path: string, selectParams: SelectParams, executeBefore?: ExecuteBefore<void>): void {
-		this.config.expose(path, new Select(selectParams).prepare(this.config, executeBefore ?? (() => {})));
+	public exposeSelect(options: T, selectParams: SelectParams, executeBefore?: ExecuteBefore<void>): void {
+		this.config.expose(options, new Select(selectParams).prepare(this.config, executeBefore ?? (() => {})));
 	}
 	
-	public exposeSelectPaged(path: string, selectParams: SelectParams, executeBefore?: ExecuteBefore<number | undefined>): void {
-		this.config.expose(path, new Select(selectParams).preparePaged(this.config, executeBefore ?? (() => undefined)));
+	public exposeSelectPaged(options: T, selectParams: SelectParams, executeBefore?: ExecuteBefore<number | undefined>): void {
+		this.config.expose(options, new Select(selectParams).preparePaged(this.config, executeBefore ?? (() => undefined)));
 	}
 	
 }

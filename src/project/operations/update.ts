@@ -36,7 +36,7 @@ export class Update {
 		sql = replaceColumnPlaceholders(sql, table);
 		[this.sql, this.paramNames] = getPositionalQuery(sql);
 	}
-	public prepare(dbInterfaceConfig: DbInterfaceConfig, executeBefore: ExecuteBefore<void>): PreparedUpdate {
+	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T>, executeBefore: ExecuteBefore<void>): PreparedUpdate {
 		return new PreparedUpdate(dbInterfaceConfig.dbEngine, this.sql, this.paramNames, executeBefore);
 	}
 	

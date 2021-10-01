@@ -31,7 +31,7 @@ export class Insert {
 		let sql = `INSERT INTO ${tableName} (${columns}) VALUES (${aliases})`;
 		[this.sql, this.paramNames] = getPositionalQuery(sql);
 	}
-	public prepare(dbInterfaceConfig: DbInterfaceConfig, executeBefore: ExecuteBefore<void>): PreparedInsert {
+	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T>, executeBefore: ExecuteBefore<void>): PreparedInsert {
 		return new PreparedInsert(dbInterfaceConfig.dbEngine, this.sql, this.paramNames, executeBefore);
 	}
 	

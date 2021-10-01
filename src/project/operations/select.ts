@@ -22,7 +22,7 @@ export interface SelectParams {
 	orderBy?: QueryColumn | string | (QueryColumn | string)[];
 	limitOffset?: number;
 	limitSize?: number;
-	entityParams: any;
+	entityParams?: any;
 }
 
 class JoinableSelect extends Joinable {
@@ -198,11 +198,11 @@ export class Select {
 	public get hasHardLimit(): boolean {
 		return this.selectParams.limitSize != null;
 	}
-	public prepare(dbInterfaceConfig: DbInterfaceConfig, executeBefore: ExecuteBefore<void>): PreparedSelect {
+	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T>, executeBefore: ExecuteBefore<void>): PreparedSelect {
 		let [sql, paramNames] = getPositionalQuery(this.sql);
 		return new PreparedSelect(dbInterfaceConfig.dbEngine, sql, paramNames, executeBefore);
 	}
-	public preparePaged(dbInterfaceConfig: DbInterfaceConfig, executeBefore: ExecuteBefore<number | undefined>): PreparedSelectPaged {
+	public preparePaged<T>(dbInterfaceConfig: DbInterfaceConfig<T>, executeBefore: ExecuteBefore<number | undefined>): PreparedSelectPaged {
 		if (this.hasHardLimit)
 			throw new Error(
 				"Pagination is not allowed for selects with hard limit."
@@ -210,6 +210,7 @@ export class Select {
 		let [sql, paramNames] = getPositionalQuery(this.sql);
 		return new PreparedSelectPaged(
 			dbInterfaceConfig.dbEngine,
+			dbInterfaceConfig.pageIndexParam,
 			dbInterfaceConfig.getLimitByPageIndex,
 			sql,
 			paramNames,
@@ -244,6 +245,7 @@ export class PreparedSelect extends PreparedQuery {
 export class PreparedSelectPaged extends PreparedQuery {
 	public constructor(
 		private dbEngine: IDbEngine,
+		private pageIndexParam: string,
 		private getLimitByPageIndex: (pageIndex: number) => [number, number],
 		private sql: string,
 		private paramNames: string[],
@@ -253,22 +255,22 @@ export class PreparedSelectPaged extends PreparedQuery {
 		this.sql += " LIMIT ?,?";
 	}
 
-	public run({
-		params,
-		pageIndex,
-	}: {
-		params?: any;
-		pageIndex?: number;
-	}): Promise<any[]> {
-		pageIndex = pageIndex ?? this.executeBefore(params);
-		pageIndex ??= 0;
-		if (pageIndex < 0) pageIndex = 0;
+	public run(params?: any): Promise<any[]> {
 		if (Array.isArray(params)) {
+			let pageIndex = params[params.length - 1];
+			pageIndex = pageIndex ?? this.executeBefore(params);
+			pageIndex ??= 0;
+			if (pageIndex < 0) pageIndex = 0;
 			return this.dbEngine.executeSelect(
 				this.sql,
 				params.concat(this.getLimitByPageIndex(pageIndex))
 			);
 		} else {
+			console.log(params);
+			let pageIndex = params[this.pageIndexParam];
+			pageIndex = pageIndex ?? this.executeBefore(params);
+			pageIndex ??= 0;
+			if (pageIndex < 0) pageIndex = 0;
 			return this.dbEngine.executeSelect(
 				this.sql,
 				this.paramNames
