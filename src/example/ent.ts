@@ -25,23 +25,23 @@ export class Persone extends Table {
 	}
 	
 	public get id(): QueryColumn {
-		return new QueryColumn("prove", this.__alias, "id");
+		return new QueryColumn("prove", this.__alias, "id", "id");
 	}
 	
 	public get comune(): QueryColumn {
-		return new QueryColumn("prove", this.__alias, "comune");
+		return new QueryColumn("prove", this.__alias, "comune", "comune");
 	}
 	
 	public get data_nascita(): QueryColumn {
-		return new QueryColumn("prove", this.__alias, "data_nascita");
+		return new QueryColumn("prove", this.__alias, "data_nascita", "data_nascita");
 	}
 	
 	public get nome(): QueryColumn {
-		return new QueryColumn("prove", this.__alias, "nome");
+		return new QueryColumn("prove", this.__alias, "nome", "nome");
 	}
 	
 	public get cognome(): QueryColumn {
-		return new QueryColumn("prove", this.__alias, "cognome");
+		return new QueryColumn("prove", this.__alias, "cognome", "cognome");
 	}
 	protected get __primaryKey(): QueryColumn {
 		return this.id;
@@ -70,13 +70,13 @@ export class Comuni extends Table {
 	}
 	
 	public get comune(): QueryColumn {
-		return new QueryColumn("prove", this.__alias, "comune");
+		return new QueryColumn("prove", this.__alias, "comune", "comune");
 	}
 	public get provincia(): QueryColumn {
-		return new QueryColumn("prove", this.__alias, "provincia");
+		return new QueryColumn("prove", this.__alias, "provincia", "provincia");
 	}
 	public get id(): QueryColumn {
-		return new QueryColumn("prove", this.__alias, "id");
+		return new QueryColumn("prove", this.__alias, "id", "id");
 	}
 	protected get __primaryKey(): QueryColumn {
 		return this.id;
@@ -112,19 +112,19 @@ export class ChkinIngressi extends Table {
 	}
 	
 	public get id(): QueryColumn {
-		return new QueryColumn("falegnameria", this.__alias, "id");
+		return new QueryColumn("falegnameria", this.__alias, "id", "id");
 	}
 	
 	public get idUtente(): QueryColumn {
-		return new QueryColumn("falegnameria", this.__alias, "id_utente");
+		return new QueryColumn("falegnameria", this.__alias, "id_utente", "idUtente");
 	}
 	
 	public get entrata(): QueryColumn {
-		return new QueryColumn("falegnameria", this.__alias, "entrata");
+		return new QueryColumn("falegnameria", this.__alias, "entrata", "entrata");
 	}
 	
 	public get uscita(): QueryColumn {
-		return new QueryColumn("falegnameria", this.__alias, "uscita");
+		return new QueryColumn("falegnameria", this.__alias, "uscita", "uscita");
 	}
 }
 
@@ -151,11 +151,11 @@ export class MngUtenti extends Table{
 	}
 	
 	public get id(): QueryColumn {
-		return new QueryColumn("falegnameria", this.__alias, "id");
+		return new QueryColumn("falegnameria", this.__alias, "id", "id");
 	}
 	
 	public get username(): QueryColumn {
-		return new QueryColumn("falegnameria", this.__alias, "username");
+		return new QueryColumn("falegnameria", this.__alias, "username", "username");
 	}
 }
 
@@ -193,23 +193,23 @@ export class Articoli extends Table{
 	}
 	
 	public get id(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "id");
+		return new QueryColumn("chimiclean", this.__alias, "id", "id");
 	}
 	
 	public get unitaMisura(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "unita_misura");
+		return new QueryColumn("chimiclean", this.__alias, "unita_misura", "unitaMisura");
 	}
 	
 	public get classificazione(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "classificazione");
+		return new QueryColumn("chimiclean", this.__alias, "classificazione", "classificazione");
 	}
 	
 	public get codice(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "codice");
+		return new QueryColumn("chimiclean", this.__alias, "codice", "codice");
 	}
 	
 	public get descrizione(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "descrizione");
+		return new QueryColumn("chimiclean", this.__alias, "descrizione", "descrizione");
 	}
 }
 
@@ -237,15 +237,15 @@ export class UnitaDiMisura extends Table{
 	}
 	
 	public get id(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "id");
+		return new QueryColumn("chimiclean", this.__alias, "id", "id");
 	}
 	
 	public get simbolo(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "simbolo");
+		return new QueryColumn("chimiclean", this.__alias, "simbolo", "simbolo");
 	}
 	
 	public get descrizione(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "descrizione");
+		return new QueryColumn("chimiclean", this.__alias, "descrizione", "descrizione");
 	}
 }
 
@@ -279,22 +279,22 @@ export class ArticoliClassificazione extends Table{
 	}
 	
 	public get id(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "id");
+		return new QueryColumn("chimiclean", this.__alias, "id", "id");
 	}
 	
 	public get idParent(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "id_parent");
+		return new QueryColumn("chimiclean", this.__alias, "id_parent", "idParent");
 	}
 	
 	public get path(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "path");
+		return new QueryColumn("chimiclean", this.__alias, "path", "path");
 	}
 	
 	public get value(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "value");
+		return new QueryColumn("chimiclean", this.__alias, "value", "value");
 	}
 	
 	public get fullDescPath(): QueryColumn {
-		return new QueryColumn("chimiclean", this.__alias, "full_desc_path");
+		return new QueryColumn("chimiclean", this.__alias, "full_desc_path", "fullDescPath");
 	}
 }

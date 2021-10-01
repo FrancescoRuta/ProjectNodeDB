@@ -80,6 +80,7 @@ class JoinableSelect extends Joinable {
 						column: new QueryColumn(
 							null,
 							alias,
+							field.alias ? field.alias : field.columnName,
 							field.alias ? field.alias : field.columnName
 						),
 						tableName: fk.tableName,
@@ -90,6 +91,7 @@ class JoinableSelect extends Joinable {
 						column: new QueryColumn(
 							null,
 							alias,
+							field.alias ? field.alias : field.columnName,
 							field.alias ? field.alias : field.columnName
 						),
 						tableName: pk.tableName,
@@ -197,7 +199,7 @@ export class Select extends BindableEnity {
 				) {
 					return target[key];
 				} else {
-					return new QueryColumn(null, alias, k);
+					return new QueryColumn(null, alias, k, k);
 				}
 			},
 		});
@@ -230,6 +232,7 @@ export class Select extends BindableEnity {
 }
 
 export class PreparedSelect extends PreparedQuery {
+	private paramIndexes: number[];
 	public constructor(
 		private dbEngine: IDbEngine,
 		private sql: string,
@@ -237,13 +240,15 @@ export class PreparedSelect extends PreparedQuery {
 		private executeBefore: ExecuteBefore<void>,
 	) {
 		super();
+		this.paramIndexes = paramNames.map((_, i) => i);
 	}
 
 	public run(params?: any): Promise<any[]> {
-		this.executeBefore(params);
 		if (Array.isArray(params)) {
+			this.executeBefore({params, paramNames: this.paramIndexes, queryType: "SELECT"});
 			return this.dbEngine.executeSelect(this.sql, params);
 		} else {
+			this.executeBefore({params, paramNames: this.paramNames, queryType: "SELECT"});
 			return this.dbEngine.executeSelect(
 				this.sql,
 				this.paramNames.map((p) => params[p])
@@ -253,6 +258,7 @@ export class PreparedSelect extends PreparedQuery {
 }
 
 export class PreparedSelectPaged extends PreparedQuery {
+	private paramIndexes: number[];
 	public constructor(
 		private dbEngine: IDbEngine,
 		private pageIndexParam: string,
@@ -262,13 +268,15 @@ export class PreparedSelectPaged extends PreparedQuery {
 		private executeBefore: ExecuteBefore<number | undefined>,
 	) {
 		super();
+		this.paramIndexes = paramNames.map((_, i) => i);
 		this.sql += " LIMIT ?,?";
 	}
 
 	public run(params?: any): Promise<any[]> {
 		if (Array.isArray(params)) {
 			let pageIndex = params[params.length - 1];
-			pageIndex = pageIndex ?? this.executeBefore(params);
+			let executeBeforeResult = this.executeBefore({params, paramNames: this.paramIndexes, queryType: "SELECT_PAGED"});
+			pageIndex = pageIndex ?? executeBeforeResult;
 			pageIndex ??= 0;
 			if (pageIndex < 0) pageIndex = 0;
 			return this.dbEngine.executeSelect(
@@ -276,9 +284,9 @@ export class PreparedSelectPaged extends PreparedQuery {
 				params.concat(this.getLimitByPageIndex(pageIndex))
 			);
 		} else {
-			console.log(params);
 			let pageIndex = params[this.pageIndexParam];
-			pageIndex = pageIndex ?? this.executeBefore(params);
+			let executeBeforeResult = this.executeBefore({params, paramNames: this.paramNames, queryType: "SELECT_PAGED"});
+			pageIndex = pageIndex ?? executeBeforeResult;
 			pageIndex ??= 0;
 			if (pageIndex < 0) pageIndex = 0;
 			return this.dbEngine.executeSelect(

@@ -32,6 +32,7 @@ export class Delete {
 }
 
 export class PreparedDelete extends PreparedQuery {
+	private paramIndexes: number[];
 	public constructor(
 		private dbEngine: IDbEngine,
 		private sql: string,
@@ -39,13 +40,15 @@ export class PreparedDelete extends PreparedQuery {
 		private executeBefore: ExecuteBefore<void>
 	) {
 		super();
+		this.paramIndexes = paramNames.map((_, i) => i);
 	}
 
 	public run(params?: any): Promise<any> {
-		this.executeBefore(params);
 		if (Array.isArray(params)) {
+			this.executeBefore({params, paramNames: this.paramIndexes, queryType: "DELETE"});
 			return this.dbEngine.execute(this.sql, params);
 		} else {
+			this.executeBefore({params, paramNames: this.paramNames, queryType: "DELETE"});
 			return this.dbEngine.execute(
 				this.sql,
 				this.paramNames.map((p) => params[p])

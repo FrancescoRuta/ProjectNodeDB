@@ -22,7 +22,7 @@ export abstract class BindableEnity {
 
 export class QueryColumn extends BindableEnity {
 	private __alias: string | null;
-	public constructor(private db: string | null, private table: string | null, private col: string) {
+	public constructor(private db: string | null, private table: string | null, private col: string, private __colVarName: string) {
 		super()
 		this.__alias = null;
 	}
@@ -35,6 +35,9 @@ export class QueryColumn extends BindableEnity {
 	public get alias(): string | null {
 		return this.__alias;
 	}
+	public get colVarName(): string | null {
+		return this.__colVarName;
+	}
 	public get tableName(): string | null {
 		return this.table;
 	}
@@ -42,7 +45,7 @@ export class QueryColumn extends BindableEnity {
 		return this.__alias ? this.columnFullName + " AS " + this.__alias : this.columnFullName;
 	}
 	public as(alias: string): QueryColumn {
-		let q = new QueryColumn(this.db, this.table, this.col);
+		let q = new QueryColumn(this.db, this.table, this.col, alias);
 		q.__alias = alias;
 		return q;
 	}

@@ -1,4 +1,4 @@
-import { db } from "../db";
+import { db, escapeParams } from "../db";
 import { Articoli, ArticoliClassificazione, UnitaDiMisura } from "../ent";
 
 let articoli = new Articoli();
@@ -14,5 +14,7 @@ db.exposeSelectPaged("/articoli/get", {
 		unitaDiMisura.simbolo.as("unitaDiMisura"),
 		classificazione.value.as("classificazione"),
 	],
-	where: "@id < 5 AND @codice like 'cane'"
+	where: "@codice like :codice:"
 });
+
+db.exposeInsert("/articoli/add", articoli);

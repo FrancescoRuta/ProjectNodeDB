@@ -28,7 +28,7 @@ export class Update {
 		if (!where) {
 			where = `${primaryKey.columnName}=:${primaryKey.columnName}:`;
 		}
-		let sets = fields.map(f => `${f.columnName}=:${f.alias ?? f.columnName}:`).join(",");
+		let sets = fields.map(f => `${f.columnName}=:${f.colVarName}:`).join(",");
 		for (let f of fields)
 			if (f.tableName != tableName)
 				throw new Error(`Update fields must be from "${tableName}" table.`);
@@ -43,6 +43,7 @@ export class Update {
 }
 
 export class PreparedUpdate extends PreparedQuery {
+	private paramIndexes: number[];
 	public constructor(
 		private dbEngine: IDbEngine,
 		private sql: string,
@@ -50,13 +51,15 @@ export class PreparedUpdate extends PreparedQuery {
 		private executeBefore: ExecuteBefore<void>,
 	) {
 		super();
+		this.paramIndexes = paramNames.map((_, i) => i);
 	}
 
 	public run(params?: any): Promise<any> {
-		this.executeBefore(params);
 		if (Array.isArray(params)) {
+			this.executeBefore({params, paramNames: this.paramIndexes, queryType: "UPDATE"});
 			return this.dbEngine.execute(this.sql, params);
 		} else {
+			this.executeBefore({params, paramNames: this.paramNames, queryType: "UPDATE"});
 			return this.dbEngine.execute(
 				this.sql,
 				this.paramNames.map((p) => params[p])
