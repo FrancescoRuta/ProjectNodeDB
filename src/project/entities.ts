@@ -214,10 +214,11 @@ export class JoinResult extends Joinable {
 }
 
 export abstract class Table extends Joinable {
-	protected abstract get __primaryKey(): QueryColumn;
+	protected abstract get __primaryKey(): QueryColumn | null;
 	protected abstract get __tableName(): string;
 	protected abstract get __alias(): string;
 	protected get __primaryKeys(): JoinablePrimaryKey[] {
+		if (this.__primaryKey == null) return [];
 		return [
 			{
 				column: this.__primaryKey,

@@ -6,7 +6,7 @@ import { getPositionalQuery, replaceColumnPlaceholders } from "../sql_helper";
 
 export type UpdateParams<D> = Table | {
 	table: Table;
-	fields?: QueryColumn | QueryColumn[];
+	fields?: (QueryColumn | [QueryColumn, string])[];
 	where?: string;
 	dbEngineArgs?: D;
 }
@@ -31,10 +31,12 @@ export class Update<D> {
 		if (!where) {
 			where = `${primaryKey.columnName}=:${primaryKey.columnName}:`;
 		}
-		let sets = fields.map(f => `${f.columnName}=:${f.colVarName}:`).join(",");
-		for (let f of fields)
+		let sets = fields.map(f => f instanceof QueryColumn ? `${f.columnName}=:${f.colVarName}:` : `${f[0].columnName}=:${f[1]}:`).join(",");
+		for (let f of fields) {
+			if (!(f instanceof QueryColumn)) f = f[0];
 			if (f.tableName != tableName)
 				throw new Error(`Update fields must be from "${tableName}" table.`);
+		}
 		let sql = `UPDATE ${tableName} SET ${sets} WHERE ${where}`;
 		sql = replaceColumnPlaceholders(sql, table);
 		[this.sql, this.paramNames] = getPositionalQuery(sql);

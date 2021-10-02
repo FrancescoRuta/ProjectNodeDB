@@ -43,7 +43,7 @@ export class Persone extends Table {
 	public get cognome(): QueryColumn {
 		return new QueryColumn("prove", this.__alias, "cognome", "cognome");
 	}
-	protected get __primaryKey(): QueryColumn {
+	protected get __primaryKey(): QueryColumn | null {
 		return this.id;
 	}
 }
@@ -78,7 +78,7 @@ export class Comuni extends Table {
 	public get id(): QueryColumn {
 		return new QueryColumn("prove", this.__alias, "id", "id");
 	}
-	protected get __primaryKey(): QueryColumn {
+	protected get __primaryKey(): QueryColumn | null {
 		return this.id;
 	}
 }
@@ -100,7 +100,7 @@ export class ChkinIngressi extends Table {
 		];
 	}
 
-	protected get __primaryKey(): QueryColumn {
+	protected get __primaryKey(): QueryColumn | null {
 		return this.id;
 	}
 
@@ -139,7 +139,7 @@ export class MngUtenti extends Table{
 		return [];
 	}
 
-	protected get __primaryKey(): QueryColumn {
+	protected get __primaryKey(): QueryColumn | null {
 		return this.id;
 	}
 
@@ -180,7 +180,7 @@ export class Articoli extends Table{
 		];
 	}
 
-	protected get __primaryKey(): QueryColumn {
+	protected get __primaryKey(): QueryColumn | null {
 		return this.id;
 	}
 
@@ -224,7 +224,7 @@ export class UnitaDiMisura extends Table{
 		return [];
 	}
 	
-	protected get __primaryKey(): QueryColumn {
+	protected get __primaryKey(): QueryColumn | null {
 		return this.id;
 	}
 	
@@ -266,7 +266,7 @@ export class ArticoliClassificazione extends Table{
 		];
 	}
 	
-	protected get __primaryKey(): QueryColumn {
+	protected get __primaryKey(): QueryColumn | null {
 		return this.id;
 	}
 	
