@@ -35,7 +35,7 @@ export class Update<D> {
 		let sets = fields.map(f => f instanceof QueryColumn ? `${f.escapedColumnName}=:${f.aliasedColumnFullIdentifier}:` : `${f[0].escapedColumnName}=:${f[1]}:`).join(",");
 		for (let f of fields) {
 			if (!(f instanceof QueryColumn)) f = f[0];
-			if (f.escapedTableName != tableName)
+			if (f.escapedRawTableName != tableName)
 				throw new Error(`Update fields must be from "${tableName}" table.`);
 		}
 		let sql = `UPDATE ${tableName} SET ${sets} WHERE ${where}`;

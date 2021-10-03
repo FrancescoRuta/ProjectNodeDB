@@ -30,7 +30,7 @@ export class Insert<D> {
 		let tableName = (<any>table).__tableName;
 		for (let f of fields) {
 			if (!(f instanceof QueryColumn)) f = f[0];
-			if (f.escapedTableName != tableName)
+			if (f.escapedRawTableName != tableName)
 				throw new Error(`Insert fields must be from "${tableName}" table.`);
 		}
 		let sql = `INSERT INTO ${tableName} (${columns}) VALUES (${aliases})`;

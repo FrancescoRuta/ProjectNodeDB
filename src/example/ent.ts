@@ -11,19 +11,20 @@ export class Persone extends Table {
 		return [
 			{
 				column: this.comune,
-				tableName: "comuni",
+				tableName: escapeFunction("comuni"),
 				ambiguous: false,
 			},
 		];
 	}
 
 	protected get __tableName(): string {
-		return "persone";
+		return escapeFunction("persone");
 	}
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
 			unescapedDbName: "prove",
+			rawTableName: "persone",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "id",
 			userColumnAlias: "id",
@@ -34,6 +35,7 @@ export class Persone extends Table {
 	public get comune(): QueryColumn<"comune", string> {
 		return new QueryColumn({
 			unescapedDbName: "prove",
+			rawTableName: "persone",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "comune",
 			userColumnAlias: "comune",
@@ -44,6 +46,7 @@ export class Persone extends Table {
 	public get dataNascita(): QueryColumn<"dataNascita", Date> {
 		return new QueryColumn({
 			unescapedDbName: "prove",
+			rawTableName: "persone",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "data_nascita",
 			userColumnAlias: "dataNascita",
@@ -54,6 +57,7 @@ export class Persone extends Table {
 	public get nome(): QueryColumn<"nome", string> {
 		return new QueryColumn({
 			unescapedDbName: "prove",
+			rawTableName: "persone",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "nome",
 			userColumnAlias: "nome",
@@ -64,6 +68,7 @@ export class Persone extends Table {
 	public get cognome(): QueryColumn<"cognome", string> {
 		return new QueryColumn({
 			unescapedDbName: "prove",
+			rawTableName: "persone",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "cognome",
 			userColumnAlias: "cognome",
@@ -79,26 +84,27 @@ export class Comuni extends Table {
 	protected __alias: string;
 	public constructor(alias?: string) {
 		super();
-		this.__alias = alias ?? this.__tableName;
+		this.__alias = alias ?? "Comuni";
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
 		return [
 			{
 				column: this.provincia,
-				tableName: "comuni",
+				tableName: escapeFunction("comuni"),
 				ambiguous: false,
 			},
 		];
 	}
 
 	protected get __tableName(): string {
-		return "comuni";
+		return escapeFunction("comuni");
 	}
 	
 	public get comune(): QueryColumn<"comune", string> {
 		return new QueryColumn({
 			unescapedDbName: "prove",
+			rawTableName: "comuni",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "comune",
 			userColumnAlias: "comune",
@@ -108,6 +114,7 @@ export class Comuni extends Table {
 	public get provincia(): QueryColumn<"provincia", string> {
 		return new QueryColumn({
 			unescapedDbName: "prove",
+			rawTableName: "comuni",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "provincia",
 			userColumnAlias: "provincia",
@@ -117,6 +124,7 @@ export class Comuni extends Table {
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
 			unescapedDbName: "prove",
+			rawTableName: "comuni",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "id",
 			userColumnAlias: "id",
@@ -139,7 +147,7 @@ export class ChkinIngressi extends Table {
 		return [
 			{
 				column: this.idUtente,
-				tableName: "mng_utenti",
+				tableName: escapeFunction("mng_utenti"),
 				ambiguous: false,
 			},
 		];
@@ -150,12 +158,13 @@ export class ChkinIngressi extends Table {
 	}
 
 	protected get __tableName(): string {
-		return "chkin_ingressi";
+		return escapeFunction("chkin_ingressi");
 	}
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
 			unescapedDbName: "falegnameria",
+			rawTableName: "chkin_ingressi",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "id",
 			userColumnAlias: "id",
@@ -166,6 +175,7 @@ export class ChkinIngressi extends Table {
 	public get idUtente(): QueryColumn<"idUtente", string> {
 		return new QueryColumn({
 			unescapedDbName: "falegnameria",
+			rawTableName: "chkin_ingressi",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "id_utente",
 			userColumnAlias: "idUtente",
@@ -176,6 +186,7 @@ export class ChkinIngressi extends Table {
 	public get entrata(): QueryColumn<"entrata", string> {
 		return new QueryColumn({
 			unescapedDbName: "falegnameria",
+			rawTableName: "chkin_ingressi",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "entrata",
 			userColumnAlias: "entrata",
@@ -186,6 +197,7 @@ export class ChkinIngressi extends Table {
 	public get uscita(): QueryColumn<"uscita", string> {
 		return new QueryColumn({
 			unescapedDbName: "falegnameria",
+			rawTableName: "chkin_ingressi",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "uscita",
 			userColumnAlias: "uscita",
@@ -198,7 +210,7 @@ export class MngUtenti extends Table{
 	protected __alias: string;
 	public constructor(alias?: string) {
 		super();
-		this.__alias = alias ?? this.__tableName;
+		this.__alias = alias ?? "MngUtenti";
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
@@ -210,12 +222,13 @@ export class MngUtenti extends Table{
 	}
 
 	protected get __tableName(): string {
-		return "mng_utenti";
+		return escapeFunction("mng_utenti");
 	}
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
 			unescapedDbName: "falegnameria",
+			rawTableName: "mng_utenti",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "id",
 			userColumnAlias: "id",
@@ -226,6 +239,7 @@ export class MngUtenti extends Table{
 	public get username(): QueryColumn<"username", string> {
 		return new QueryColumn({
 			unescapedDbName: "falegnameria",
+			rawTableName: "mng_utenti",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "username",
 			userColumnAlias: "username",
@@ -238,18 +252,18 @@ export class Articoli extends Table{
 	protected __alias: string;
 	public constructor(alias?: string) {
 		super();
-		this.__alias = alias ?? this.__tableName;
+		this.__alias = alias ?? "Articoli";
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
 		return [
 			{
 				column: this.unitaMisura,
-				tableName: "unita_di_misura",
+				tableName: escapeFunction("unita_di_misura"),
 				ambiguous: false,
 			}, {
 				column: this.classificazione,
-				tableName: "articoli__classificazione",
+				tableName: escapeFunction("articoli__classificazione"),
 				ambiguous: false,
 			}
 		];
@@ -260,13 +274,14 @@ export class Articoli extends Table{
 	}
 
 	protected get __tableName(): string {
-		return "articoli";
+		return escapeFunction("articoli");
 	}
 	
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "articoli",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "id",
 			userColumnAlias: "id",
@@ -277,6 +292,7 @@ export class Articoli extends Table{
 	public get unitaMisura(): QueryColumn<"unitaMisura", number> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "articoli",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "unita_misura",
 			userColumnAlias: "unitaMisura",
@@ -287,6 +303,7 @@ export class Articoli extends Table{
 	public get classificazione(): QueryColumn<"classificazione", number> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "articoli",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "classificazione",
 			userColumnAlias: "classificazione",
@@ -297,6 +314,7 @@ export class Articoli extends Table{
 	public get codice(): QueryColumn<"codice", string> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "articoli",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "codice",
 			userColumnAlias: "codice",
@@ -307,6 +325,7 @@ export class Articoli extends Table{
 	public get descrizione(): QueryColumn<"descrizione", string> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "articoli",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "descrizione",
 			userColumnAlias: "descrizione",
@@ -319,7 +338,7 @@ export class UnitaDiMisura extends Table{
 	protected __alias: string;
 	public constructor(alias?: string) {
 		super();
-		this.__alias = alias ?? this.__tableName;
+		this.__alias = alias ?? "UnitaDiMisura";
 	}
 	
 	protected get __foreignKeys(): ForeignKey[] {
@@ -331,13 +350,14 @@ export class UnitaDiMisura extends Table{
 	}
 	
 	protected get __tableName(): string {
-		return "unita_di_misura";
+		return escapeFunction("unita_di_misura");
 	}
 	
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "unita_di_misura",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "id",
 			userColumnAlias: "id",
@@ -348,6 +368,7 @@ export class UnitaDiMisura extends Table{
 	public get simbolo(): QueryColumn<"simbolo", string> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "unita_di_misura",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "simbolo",
 			userColumnAlias: "simbolo",
@@ -358,6 +379,7 @@ export class UnitaDiMisura extends Table{
 	public get descrizione(): QueryColumn<"descrizione", string> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "unita_di_misura",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "descrizione",
 			userColumnAlias: "descrizione",
@@ -370,7 +392,7 @@ export class ArticoliClassificazione extends Table{
 	protected __alias: string;
 	public constructor(alias?: string) {
 		super();
-		this.__alias = alias ?? this.__tableName;
+		this.__alias = alias ?? "ArticoliClassificazione";
 	}
 	
 	protected get __foreignKeys(): ForeignKey[] {
@@ -388,13 +410,14 @@ export class ArticoliClassificazione extends Table{
 	}
 	
 	protected get __tableName(): string {
-		return "articoli__classificazione";
+		return escapeFunction("articoli__classificazione");
 	}
 	
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "articoli__classificazione",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "id",
 			userColumnAlias: "id",
@@ -405,6 +428,7 @@ export class ArticoliClassificazione extends Table{
 	public get idParent(): QueryColumn<"idParent", string> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "articoli__classificazione",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "id_parent",
 			userColumnAlias: "idParent",
@@ -415,6 +439,7 @@ export class ArticoliClassificazione extends Table{
 	public get path(): QueryColumn<"path", string> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "articoli__classificazione",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "path",
 			userColumnAlias: "path",
@@ -425,6 +450,7 @@ export class ArticoliClassificazione extends Table{
 	public get value(): QueryColumn<"value", string> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "articoli__classificazione",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "value",
 			userColumnAlias: "value",
@@ -435,6 +461,7 @@ export class ArticoliClassificazione extends Table{
 	public get fullDescPath(): QueryColumn<"fullDescPath", string> {
 		return new QueryColumn({
 			unescapedDbName: "chimiclean",
+			rawTableName: "articoli__classificazione",
 			unescapedTableName: this.__alias,
 			unescapedColumnName: "full_desc_path",
 			userColumnAlias: "fullDescPath",

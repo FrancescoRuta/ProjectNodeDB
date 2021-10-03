@@ -21,8 +21,9 @@ export abstract class BindableEnity {
 }
 
 export interface QueryColumnData<Name extends string, Ty> {
-	unescapedDbName?: string;
-	unescapedTableName?: string;
+	unescapedDbName: string | undefined;
+	rawTableName: string | undefined;
+	unescapedTableName: string | undefined;
 	unescapedColumnName: string;
 	userColumnAlias: Name;
 	castValue: (value: any) => Ty;
@@ -34,6 +35,12 @@ export class QueryColumn<Name extends string, Ty> extends BindableEnity {
 	}
 	public get escapedDbName(): string | undefined {
 		return this.data.unescapedDbName ? this.escapeFunction(this.data.unescapedDbName) : undefined;
+	}
+	public get escapedRawTableName(): string | undefined {
+		return this.data.rawTableName ? this.escapeFunction(this.data.rawTableName): undefined;
+	}
+	public get unescapedRawTableName(): string | undefined {
+		return this.data.rawTableName;
 	}
 	public get unescapedDbName(): string | undefined {
 		return this.data.unescapedDbName;
@@ -70,6 +77,7 @@ export class QueryColumn<Name extends string, Ty> extends BindableEnity {
 			unescapedDbName: this.data.unescapedDbName,
 			unescapedTableName: this.data.unescapedTableName,
 			unescapedColumnName: this.data.unescapedColumnName,
+			rawTableName: this.data.rawTableName,
 			userColumnAlias: alias,
 			castValue: this.data.castValue,
 		}, this.escapeFunction);
@@ -79,6 +87,9 @@ export class QueryColumn<Name extends string, Ty> extends BindableEnity {
 	}
 	public static from<A extends string, Ty>(str: string, alias: A, escapeFunction: (ident: string) => string, castValue?: (value: any) => Ty): QueryColumn<A, Ty> {
 		return new QueryColumn({
+			unescapedDbName: undefined,
+			rawTableName: undefined,
+			unescapedTableName: undefined,
 			unescapedColumnName: alias,
 			userColumnAlias: alias,
 			castValue: castValue ?? (a => a),
