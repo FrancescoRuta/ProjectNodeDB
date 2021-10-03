@@ -38,7 +38,7 @@ export interface SelectParams<D, F extends QueryColumn<string, any>[]> {
 class JoinableSelect<D, F extends QueryColumn<string, any>[]> extends Joinable {
 	private foreignKeys: ForeignKey[];
 	private primaryKeys: JoinablePrimaryKey[];
-	public constructor(private sql: string, alias: string, selectParams: SelectParams<D, F>, private entityBindings: any) {
+	public constructor(private sql: string, alias: string, selectParams: SelectParams<D, F>, private entityBindings: any, private escapeFunction: (ident: string) => string) {
 		super();
 		let fields = selectParams.fields ? Array.isArray(selectParams.fields) ? selectParams.fields : [selectParams.fields] : undefined;
 		let { __foreignKeys, __primaryKeys }: { __foreignKeys: ForeignKey[], __primaryKeys: JoinablePrimaryKey[] } = <any>selectParams.from;
@@ -56,17 +56,12 @@ class JoinableSelect<D, F extends QueryColumn<string, any>[]> extends Joinable {
 				if (fk) {
 					//field is a foreign key
 					let data = field.getData();
-					data.escapedDbName = undefined;
 					data.unescapedDbName = undefined;
-					//TODO escape function
-					data.escapedTableName = alias;
 					data.unescapedTableName = alias;
-					//TODO escape function
-					data.escapedColumnName = data.userColumnAlias;
 					data.unescapedColumnName = data.userColumnAlias;
 					data.userColumnAlias;
 					fks.push({
-						column: new QueryColumn(data),
+						column: new QueryColumn(data, this.escapeFunction),
 						tableName: fk.tableName,
 						ambiguous: fk.ambiguous,
 					});
@@ -74,17 +69,12 @@ class JoinableSelect<D, F extends QueryColumn<string, any>[]> extends Joinable {
 				if (pk) {
 					//field is a primary key
 					let data = field.getData();
-					data.escapedDbName = undefined;
 					data.unescapedDbName = undefined;
-					//TODO escape function
-					data.escapedTableName = alias;
 					data.unescapedTableName = alias;
-					//TODO escape function
-					data.escapedColumnName = data.userColumnAlias;
 					data.unescapedColumnName = data.userColumnAlias;
 					data.userColumnAlias;
 					pks.push({
-						column: new QueryColumn(data),
+						column: new QueryColumn(data, this.escapeFunction),
 						tableName: pk.tableName,
 						ambiguous: pk.ambiguous,
 					});
@@ -112,7 +102,7 @@ class JoinableSelect<D, F extends QueryColumn<string, any>[]> extends Joinable {
 export class Select<D, F extends QueryColumn<string, any>[]> extends BindableEnity {
 	private __sql: string;
 	private static aliasUid = 0;
-	public constructor(private selectParams: SelectParams<D, F>) {
+	public constructor(private selectParams: SelectParams<D, F>, private escapeFunction: (ident: string) => string) {
 		super();
 		this.__sql = this.computeSql();
 	}
@@ -164,7 +154,8 @@ export class Select<D, F extends QueryColumn<string, any>[]> extends BindableEni
 				"(" + this.__sql + ") AS " + alias,
 				alias,
 				this.selectParams,
-				entityBinding
+				entityBinding,
+				this.escapeFunction
 			)
 		);
 		entityBinding[alias] = res;

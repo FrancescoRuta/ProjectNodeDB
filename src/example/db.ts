@@ -22,6 +22,9 @@ class DbEngine implements IDbEngine<void> {
 			return [];
 		}
 	}
+	escapeDbIdentifier(ident: string): string {
+		return "`" + ident.replace(/\`/gm, "``") + "`";
+	}
 }
 
 const PAGE_SIZE = 50;

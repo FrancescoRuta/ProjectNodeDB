@@ -21,34 +21,31 @@ export abstract class BindableEnity {
 }
 
 export interface QueryColumnData<Name extends string, Ty> {
-	escapedDbName?: string;
 	unescapedDbName?: string;
-	escapedTableName?: string;
 	unescapedTableName?: string;
-	escapedColumnName: string;
 	unescapedColumnName: string;
 	userColumnAlias: Name;
 	castValue: (value: any) => Ty;
 }
 
 export class QueryColumn<Name extends string, Ty> extends BindableEnity {
-	public constructor(private data: QueryColumnData<Name, Ty>) {
+	public constructor(private data: QueryColumnData<Name, Ty>, private escapeFunction: (ident: string) => string) {
 		super();
 	}
 	public get escapedDbName(): string | undefined {
-		return this.data.escapedDbName;
+		return this.data.unescapedDbName ? this.escapeFunction(this.data.unescapedDbName) : undefined;
 	}
 	public get unescapedDbName(): string | undefined {
 		return this.data.unescapedDbName;
 	}
 	public get escapedTableName(): string | undefined {
-		return this.data.escapedTableName;
+		return this.data.unescapedTableName ? this.escapeFunction(this.data.unescapedTableName) : undefined;
 	}
 	public get unescapedTableName(): string | undefined {
 		return this.data.unescapedTableName;
 	}
 	public get escapedColumnName(): string {
-		return this.data.escapedColumnName;
+		return this.escapeFunction(this.data.unescapedColumnName);
 	}
 	public get unescapedColumnName(): string {
 		return this.data.unescapedColumnName;
@@ -57,10 +54,10 @@ export class QueryColumn<Name extends string, Ty> extends BindableEnity {
 		return this.data.userColumnAlias;
 	}
 	public get columnFullIdentifier(): string {
-		return (this.data.escapedTableName ? this.data.escapedTableName + "." : "") + (this.data.escapedTableName ? this.escapedTableName + "." : "") + this.escapedColumnName;
+		return (this.escapedTableName ? this.escapedTableName + "." : "") + (this.escapedTableName ? this.escapedTableName + "." : "") + this.escapedColumnName;
 	}
 	public get aliasedColumnFullIdentifier(): string {
-		return this.data.userColumnAlias != this.data.escapedColumnName ? this.columnFullIdentifier + " AS " + this.data.userColumnAlias : this.columnFullIdentifier;
+		return this.data.userColumnAlias != this.escapedColumnName ? this.columnFullIdentifier + " AS " + this.data.userColumnAlias : this.columnFullIdentifier;
 	}
 	public castValue(value: any): Ty {
 		return this.data.castValue(value);
@@ -70,26 +67,22 @@ export class QueryColumn<Name extends string, Ty> extends BindableEnity {
 	}
 	public as<A extends string>(alias: A): QueryColumn<A, Ty> {
 		return new QueryColumn({
-			escapedDbName: this.data.escapedDbName,
 			unescapedDbName: this.data.unescapedDbName,
-			escapedTableName: this.data.escapedTableName,
 			unescapedTableName: this.data.unescapedTableName,
-			escapedColumnName: this.data.escapedColumnName,
 			unescapedColumnName: this.data.unescapedColumnName,
 			userColumnAlias: alias,
 			castValue: this.data.castValue,
-		});
+		}, this.escapeFunction);
 	}
 	protected get __enityBinding(): string {
 		return this.columnFullIdentifier;
 	}
-	public static from<A extends string, Ty>(str: string, alias: A, castValue?: (value: any) => Ty): QueryColumn<A, Ty> {
+	public static from<A extends string, Ty>(str: string, alias: A, escapeFunction: (ident: string) => string, castValue?: (value: any) => Ty): QueryColumn<A, Ty> {
 		return new QueryColumn({
-			escapedColumnName: alias,
 			unescapedColumnName: alias,
 			userColumnAlias: alias,
 			castValue: castValue ?? (a => a),
-		});
+		}, escapeFunction);
 	}
 	
 }

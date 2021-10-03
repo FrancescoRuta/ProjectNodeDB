@@ -41,11 +41,11 @@ export class DbInterface<T, D> {
 	}
 	
 	public prepareSelect<F extends QueryColumn<string, any>[]>(selectParams: SelectParams<D, F>, executeBefore?: ExecuteBefore<void>): PreparedSelect<D, ColTypeRecursion<F>> {
-		return new Select(selectParams).prepare(this.config, this.config.executeBefore!(executeBefore));
+		return new Select(selectParams, this.config.dbEngine.escapeDbIdentifier).prepare(this.config, this.config.executeBefore!(executeBefore));
 	}
 	
 	public prepareSelectPaged<F extends QueryColumn<string, any>[]>(selectParams: SelectParams<D, F>, executeBefore?: ExecuteBefore<number | undefined>): PreparedSelectPaged<D, ColTypeRecursion<F>> {
-		return new Select(selectParams).preparePaged(this.config, executeBefore ?? (() => undefined));
+		return new Select(selectParams, this.config.dbEngine.escapeDbIdentifier).preparePaged(this.config, executeBefore ?? (() => undefined));
 	}
 	
 	public exposeInsert(options: T, insertParams: InsertParams<D>, executeBefore?: ExecuteBefore<void>): void {
@@ -61,15 +61,15 @@ export class DbInterface<T, D> {
 	}
 	
 	public exposeSelect<F extends QueryColumn<string, any>[]>(options: T, selectParams: SelectParams<D, F>, executeBefore?: ExecuteBefore<void>): void {
-		this.config.expose(options, "SELECT", new Select(selectParams).prepare(this.config, this.config.executeBefore!(executeBefore)));
+		this.config.expose(options, "SELECT", new Select(selectParams, this.config.dbEngine.escapeDbIdentifier).prepare(this.config, this.config.executeBefore!(executeBefore)));
 	}
 	
 	public exposeSelectPaged<F extends QueryColumn<string, any>[]>(options: T, selectParams: SelectParams<D, F>, executeBefore?: ExecuteBefore<number | undefined>): void {
-		this.config.expose(options, "SELECT_PAGED", new Select(selectParams).preparePaged(this.config, this.config.executeBefore!(executeBefore)));
+		this.config.expose(options, "SELECT_PAGED", new Select(selectParams, this.config.dbEngine.escapeDbIdentifier).preparePaged(this.config, this.config.executeBefore!(executeBefore)));
 	}
 	
 	public select<F extends QueryColumn<string, any>[]>(selectParams: SelectParams<D, F>, executeBefore?: ExecuteBefore<void>): Select<D, F> {
-		return new Select(selectParams);
+		return new Select(selectParams, this.config.dbEngine.escapeDbIdentifier);
 	}
 	
 }
