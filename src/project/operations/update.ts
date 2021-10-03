@@ -6,7 +6,7 @@ import { getPositionalQuery, replaceColumnPlaceholders } from "../sql_helper";
 
 export type UpdateParams<D> = Table | {
 	table: Table;
-	fields?: (QueryColumn | [QueryColumn, string])[];
+	fields?: (QueryColumn<string, any> | [QueryColumn<string, any>, string])[];
 	where?: string;
 	dbEngineArgs?: D;
 }
@@ -21,20 +21,21 @@ export class Update<D> {
 		let { table, fields, where, dbEngineArgs } = updateParams;
 		this.dbEngineArgs = dbEngineArgs;
 		let tableName: string = (<any>table).__tableName;
-		let primaryKey: QueryColumn = (<any>table).__primaryKey;
+		let primaryKey: QueryColumn<string, any> = (<any>table).__primaryKey;
 		if (!fields) {
-			let colNames: string[] = Object.getOwnPropertyNames(Object.getPrototypeOf(table)).filter(k => !k.startsWith("__") && k != "constructor" && k != primaryKey.columnName);
+			let primaryKeyName: string = primaryKey.userColumnAlias;
+			let colNames: string[] = Object.getOwnPropertyNames(Object.getPrototypeOf(table)).filter(k => !k.startsWith("__") && k != "constructor" && k != primaryKeyName);
 			fields = colNames.map(c => (<any>table)[c]).filter(k => k instanceof QueryColumn);
 		} else if (!Array.isArray(fields)) {
 			fields = [fields];
 		}
 		if (!where) {
-			where = `${primaryKey.columnName}=:${primaryKey.columnName}:`;
+			where = `${primaryKey.escapedColumnName}=:${primaryKey.aliasedColumnFullIdentifier}:`;
 		}
-		let sets = fields.map(f => f instanceof QueryColumn ? `${f.columnName}=:${f.colVarName}:` : `${f[0].columnName}=:${f[1]}:`).join(",");
+		let sets = fields.map(f => f instanceof QueryColumn ? `${f.escapedColumnName}=:${f.aliasedColumnFullIdentifier}:` : `${f[0].escapedColumnName}=:${f[1]}:`).join(",");
 		for (let f of fields) {
 			if (!(f instanceof QueryColumn)) f = f[0];
-			if (f.tableName != tableName)
+			if (f.escapedTableName != tableName)
 				throw new Error(`Update fields must be from "${tableName}" table.`);
 		}
 		let sql = `UPDATE ${tableName} SET ${sets} WHERE ${where}`;

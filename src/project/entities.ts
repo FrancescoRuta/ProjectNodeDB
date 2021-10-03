@@ -1,17 +1,17 @@
 type JoinKey = {
-	column: QueryColumn;
+	column: QueryColumn<string, any>;
 	tableName: string;
 	ambiguous: boolean;
 };
 
 export interface ForeignKey {
-	column: QueryColumn;
+	column: QueryColumn<string, any>;
 	tableName: string;
 	ambiguous: boolean;
 }
 
 export interface JoinablePrimaryKey {
-	column: QueryColumn;
+	column: QueryColumn<string, any>;
 	tableName: string;
 	ambiguous: boolean;
 }
@@ -20,38 +20,78 @@ export abstract class BindableEnity {
 	protected abstract get __enityBinding(): string;
 }
 
-export class QueryColumn extends BindableEnity {
-	private __alias: string | null;
-	public constructor(private db: string | null, private table: string | null, private col: string, private __colVarName: string) {
-		super()
-		this.__alias = null;
+export interface QueryColumnData<Name extends string, Ty> {
+	escapedDbName?: string;
+	unescapedDbName?: string;
+	escapedTableName?: string;
+	unescapedTableName?: string;
+	escapedColumnName: string;
+	unescapedColumnName: string;
+	userColumnAlias: Name;
+	castValue: (value: any) => Ty;
+}
+
+export class QueryColumn<Name extends string, Ty> extends BindableEnity {
+	public constructor(private data: QueryColumnData<Name, Ty>) {
+		super();
 	}
-	public get columnName(): string {
-		return this.col;
+	public get escapedDbName(): string | undefined {
+		return this.data.escapedDbName;
 	}
-	public get columnFullName(): string {
-		return (this.db ? this.db + "." : "") + (this.table ? this.table + "." : "") + this.col;
+	public get unescapedDbName(): string | undefined {
+		return this.data.unescapedDbName;
 	}
-	public get alias(): string | null {
-		return this.__alias;
+	public get escapedTableName(): string | undefined {
+		return this.data.escapedTableName;
 	}
-	public get colVarName(): string | null {
-		return this.__colVarName;
+	public get unescapedTableName(): string | undefined {
+		return this.data.unescapedTableName;
 	}
-	public get tableName(): string | null {
-		return this.table;
+	public get escapedColumnName(): string {
+		return this.data.escapedColumnName;
 	}
-	public get aliasedColumn(): string {
-		return this.__alias ? this.columnFullName + " AS " + this.__alias : this.columnFullName;
+	public get unescapedColumnName(): string {
+		return this.data.unescapedColumnName;
 	}
-	public as(alias: string): QueryColumn {
-		let q = new QueryColumn(this.db, this.table, this.col, alias);
-		q.__alias = alias;
-		return q;
+	public get userColumnAlias(): Name {
+		return this.data.userColumnAlias;
+	}
+	public get columnFullIdentifier(): string {
+		return (this.data.escapedTableName ? this.data.escapedTableName + "." : "") + (this.data.escapedTableName ? this.escapedTableName + "." : "") + this.escapedColumnName;
+	}
+	public get aliasedColumnFullIdentifier(): string {
+		return this.data.userColumnAlias != this.data.escapedColumnName ? this.columnFullIdentifier + " AS " + this.data.userColumnAlias : this.columnFullIdentifier;
+	}
+	public castValue(value: any): Ty {
+		return this.data.castValue(value);
+	}
+	public getData(): QueryColumnData<Name, Ty> {
+		return {...this.data};
+	}
+	public as<A extends string>(alias: A): QueryColumn<A, Ty> {
+		return new QueryColumn({
+			escapedDbName: this.data.escapedDbName,
+			unescapedDbName: this.data.unescapedDbName,
+			escapedTableName: this.data.escapedTableName,
+			unescapedTableName: this.data.unescapedTableName,
+			escapedColumnName: this.data.escapedColumnName,
+			unescapedColumnName: this.data.unescapedColumnName,
+			userColumnAlias: alias,
+			castValue: this.data.castValue,
+		});
 	}
 	protected get __enityBinding(): string {
-		return this.columnFullName;
+		return this.columnFullIdentifier;
 	}
+	public static from<A extends string, Ty>(str: string, alias: A, castValue?: (value: any) => Ty): QueryColumn<A, Ty> {
+		return new QueryColumn({
+			escapedColumnName: alias,
+			unescapedColumnName: alias,
+			userColumnAlias: alias,
+			castValue: castValue ?? (a => a),
+		});
+	}
+	
 }
 
 export abstract class SqlFrom {
@@ -65,21 +105,21 @@ export abstract class Joinable extends SqlFrom {
 
 	public innerJoin(
 		other: Joinable,
-		joinOn?: [QueryColumn, QueryColumn]
+		joinOn?: [QueryColumn<string, any>, QueryColumn<string, any>]
 	): Joinable {
 		return this.__genericJoin(other, "INNER", joinOn);
 	}
 
 	public leftJoin(
 		other: Joinable,
-		joinOn?: [QueryColumn, QueryColumn]
+		joinOn?: [QueryColumn<string, any>, QueryColumn<string, any>]
 	): Joinable {
 		return this.__genericJoin(other, "LEFT", joinOn);
 	}
 
 	public rightJoin(
 		other: Joinable,
-		joinOn?: [QueryColumn, QueryColumn]
+		joinOn?: [QueryColumn<string, any>, QueryColumn<string, any>]
 	): Joinable {
 		return this.__genericJoin(other, "RIGHT", joinOn);
 	}
@@ -97,7 +137,7 @@ export abstract class Joinable extends SqlFrom {
 	private __genericJoin(
 		other: Joinable,
 		joinType: "INNER" | "LEFT" | "RIGHT",
-		joinOn?: [QueryColumn, QueryColumn]
+		joinOn?: [QueryColumn<string, any>, QueryColumn<string, any>]
 	): Joinable {
 		let joinOnStr: [string, string];
 		if (!joinOn) {
@@ -122,7 +162,7 @@ export abstract class Joinable extends SqlFrom {
 			}
 			joinOnStr = joinOn1 ?? joinOn2!;
 		} else {
-			joinOnStr = [joinOn[0].columnFullName, joinOn[1].columnFullName];
+			joinOnStr = [joinOn[0].columnFullIdentifier, joinOn[1].columnFullIdentifier];
 		}
 		let sql = `(${this.__sqlFrom}) ${joinType} JOIN (${other.__sqlFrom}) ON ${joinOnStr[0]} = ${joinOnStr[1]}`;
 		return new JoinResult(
@@ -164,7 +204,7 @@ export abstract class Joinable extends SqlFrom {
 					if (pk.ambiguous || fk.ambiguous || result != null) {
 						throw new Error(error);
 					}
-					result = [pk.column.columnFullName, fk.column.columnFullName];
+					result = [pk.column.columnFullIdentifier, fk.column.columnFullIdentifier];
 				}
 			}
 		}
@@ -214,7 +254,7 @@ export class JoinResult extends Joinable {
 }
 
 export abstract class Table extends Joinable {
-	protected abstract get __primaryKey(): QueryColumn | null;
+	protected abstract get __primaryKey(): QueryColumn<string, any> | null;
 	protected abstract get __tableName(): string;
 	protected abstract get __alias(): string;
 	protected get __primaryKeys(): JoinablePrimaryKey[] {

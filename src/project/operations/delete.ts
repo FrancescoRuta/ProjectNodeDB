@@ -20,9 +20,9 @@ export class Delete<D> {
 		let { table, where, dbEngineArgs } = deleteParams;
 		this.dbEngineArgs = dbEngineArgs;
 		let tableName: string = (<any>table).__tableName;
-		let primaryKey: QueryColumn = (<any>table).__primaryKey;
+		let primaryKey: QueryColumn<string, any> = (<any>table).__primaryKey;
 		if (!where) {
-			where = `${primaryKey.columnName}=:${primaryKey.columnName}:`;
+			where = `${primaryKey.columnFullIdentifier}=:${primaryKey.columnFullIdentifier}:`;
 		}
 		let sql = `DELETE ${tableName} WHERE ${where}`;
 		sql = replaceColumnPlaceholders(sql, table);

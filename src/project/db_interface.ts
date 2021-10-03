@@ -1,7 +1,8 @@
 import { IDbEngine } from "./db_engine";
+import { QueryColumn } from "./entities";
 import { Delete, DeleteParams, PreparedDelete } from "./operations/delete";
 import { Insert, InsertParams, PreparedInsert } from "./operations/insert";
-import { PreparedSelect, PreparedSelectPaged, Select, SelectParams } from "./operations/select";
+import { ColTypeRecursion, PreparedSelect, PreparedSelectPaged, Select, SelectParams } from "./operations/select";
 import { PreparedUpdate, Update, UpdateParams } from "./operations/update";
 import { PreparedQuery } from "./prepared_query";
 
@@ -39,11 +40,11 @@ export class DbInterface<T, D> {
 		return new Delete(deleteParams).prepare(this.config, this.config.executeBefore!(executeBefore));
 	}
 	
-	public prepareSelect(selectParams: SelectParams<D>, executeBefore?: ExecuteBefore<void>): PreparedSelect<D> {
+	public prepareSelect<F extends QueryColumn<string, any>[]>(selectParams: SelectParams<D, F>, executeBefore?: ExecuteBefore<void>): PreparedSelect<D, ColTypeRecursion<F>> {
 		return new Select(selectParams).prepare(this.config, this.config.executeBefore!(executeBefore));
 	}
 	
-	public prepareSelectPaged(selectParams: SelectParams<D>, executeBefore?: ExecuteBefore<number | undefined>): PreparedSelectPaged<D> {
+	public prepareSelectPaged<F extends QueryColumn<string, any>[]>(selectParams: SelectParams<D, F>, executeBefore?: ExecuteBefore<number | undefined>): PreparedSelectPaged<D, ColTypeRecursion<F>> {
 		return new Select(selectParams).preparePaged(this.config, executeBefore ?? (() => undefined));
 	}
 	
@@ -59,12 +60,16 @@ export class DbInterface<T, D> {
 		this.config.expose(options, "DELETE", new Delete(deleteParams).prepare(this.config, this.config.executeBefore!(executeBefore)));
 	}
 	
-	public exposeSelect(options: T, selectParams: SelectParams<D>, executeBefore?: ExecuteBefore<void>): void {
+	public exposeSelect<F extends QueryColumn<string, any>[]>(options: T, selectParams: SelectParams<D, F>, executeBefore?: ExecuteBefore<void>): void {
 		this.config.expose(options, "SELECT", new Select(selectParams).prepare(this.config, this.config.executeBefore!(executeBefore)));
 	}
 	
-	public exposeSelectPaged(options: T, selectParams: SelectParams<D>, executeBefore?: ExecuteBefore<number | undefined>): void {
+	public exposeSelectPaged<F extends QueryColumn<string, any>[]>(options: T, selectParams: SelectParams<D, F>, executeBefore?: ExecuteBefore<number | undefined>): void {
 		this.config.expose(options, "SELECT_PAGED", new Select(selectParams).preparePaged(this.config, this.config.executeBefore!(executeBefore)));
+	}
+	
+	public select<F extends QueryColumn<string, any>[]>(selectParams: SelectParams<D, F>, executeBefore?: ExecuteBefore<void>): Select<D, F> {
+		return new Select(selectParams);
 	}
 	
 }

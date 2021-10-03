@@ -1,4 +1,4 @@
-import { db, escapeParams } from "../db";
+import { db } from "../db";
 import { Articoli, ArticoliClassificazione, UnitaDiMisura } from "../ent";
 
 let articoli = new Articoli();
@@ -18,3 +18,30 @@ db.exposeSelectPaged("/articoli/get", {
 });
 
 db.exposeInsert("/articoli/add", articoli);
+
+let k = db.select({
+	from: articoli.innerJoin(unitaDiMisura).innerJoin(classificazione),
+	fields: [
+		articoli.id,
+		articoli.classificazione,
+		articoli.codice.as("cacca")
+	]
+});
+let joinable = k.asJoinable();
+let id = joinable.id;
+let c = joinable.classificazione;
+let kw = joinable.cacca;
+let kikki = db.prepareSelect({
+	from: articoli.innerJoin(unitaDiMisura).innerJoin(classificazione),
+	fields: [
+		articoli.id,
+		articoli.classificazione,
+		articoli.codice.as("cacca")
+	]
+});
+async function prova() {
+	let ciao = await kikki.run();
+	for (let {id} of ciao) {
+		console.log(id)
+	}
+}
