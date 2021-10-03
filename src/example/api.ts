@@ -55,6 +55,6 @@ export function exposeDbApi(opts: ExposeOptions, queryType: QueryType, preparedQ
 
 export function startServer(): void {
 	app.listen(port, () => {
-		console.log(`Example app listening at http://172.27.97.198:${port}`);
+		console.log(`Example app listening at http://172.19.210.193:${port}`);
 	});
 }

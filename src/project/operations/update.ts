@@ -23,7 +23,7 @@ export class Update<D> {
 		let tableName: string = (<any>table).__tableName;
 		let primaryKey: QueryColumn<string, any> = (<any>table).__primaryKey;
 		if (!fields) {
-			let primaryKeyName: string = primaryKey.userColumnAlias;
+			let primaryKeyName: string = primaryKey.unescapedUserColumnAlias;
 			let colNames: string[] = Object.getOwnPropertyNames(Object.getPrototypeOf(table)).filter(k => !k.startsWith("__") && k != "constructor" && k != primaryKeyName);
 			fields = colNames.map(c => (<any>table)[c]).filter(k => k instanceof QueryColumn);
 		} else if (!Array.isArray(fields)) {

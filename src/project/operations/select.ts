@@ -108,7 +108,7 @@ export class Select<D, F extends QueryColumn<string, any>[]> extends BindableEni
 	}
 	private computeSql(): string {
 		let fieldsArr = this.selectParams.fields ? (Array.isArray(this.selectParams.fields) ? this.selectParams.fields : [this.selectParams.fields]) : undefined;
-		let fields: string = fieldsArr? fieldsArr.map(a => a.aliasedColumnFullIdentifier).join(",") : "*";
+		let fields: string = fieldsArr ? fieldsArr.map(a => a.aliasedColumnFullIdentifier).join(",") : "*";
 		let { from, limitOffset, limitSize, where, groupBy, having, orderBy } = this.selectParams;
 
 		let limit = limitSize ? ` LIMIT ${limitOffset ? limitOffset + "," : ""}${limitSize}` : "";
@@ -163,7 +163,7 @@ export class Select<D, F extends QueryColumn<string, any>[]> extends BindableEni
 	}
 	private createJoinableProxy(alias: string, joinableSelect: JoinableSelect<D, F>): any {
 		let fields: {[alias: string]: QueryColumn<string, any>} = {};
-		(this.selectParams.fields ?? []).forEach(f => fields[f.userColumnAlias] = f);
+		(this.selectParams.fields ?? []).forEach(f => fields[f.unescapedUserColumnAlias] = f);
 		return new Proxy(joinableSelect, {
 			get: (target: any, key) => {
 				let k = key.toString();

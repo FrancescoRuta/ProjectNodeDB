@@ -21,11 +21,11 @@ export class Insert<D> {
 		this.dbEngineArgs = dbEngineArgs;
 		if (!fields) {
 			let primaryKey: QueryColumn<string, any> = (<any>table).__primaryKey;
-			let primaryKeyName: string = primaryKey.userColumnAlias;
+			let primaryKeyName: string = primaryKey.unescapedColumnName;
 			let colNames: string[] = Object.getOwnPropertyNames(Object.getPrototypeOf(table)).filter(k => !k.startsWith("__") && k != "constructor" && k != primaryKeyName);
 			fields = colNames.map(c => (<any>table)[c]).filter(k => k instanceof QueryColumn);
 		}
-		let aliases = fields.map(f => f instanceof QueryColumn ? `:${f.userColumnAlias}:` : f[1]).join(",");
+		let aliases = fields.map(f => f instanceof QueryColumn ? `:${f.unescapedUserColumnAlias}:` : f[1]).join(",");
 		let columns = fields.map(f => f instanceof QueryColumn ? f.escapedColumnName : f[0].escapedColumnName).join(",");
 		let tableName = (<any>table).__tableName;
 		for (let f of fields) {

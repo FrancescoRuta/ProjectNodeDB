@@ -57,14 +57,17 @@ export class QueryColumn<Name extends string, Ty> extends BindableEnity {
 	public get unescapedColumnName(): string {
 		return this.data.unescapedColumnName;
 	}
-	public get userColumnAlias(): Name {
+	public get escapedUserColumnAlias(): string {
+		return this.escapeFunction(this.data.userColumnAlias);
+	}
+	public get unescapedUserColumnAlias(): Name {
 		return this.data.userColumnAlias;
 	}
 	public get columnFullIdentifier(): string {
-		return (this.escapedTableName ? this.escapedTableName + "." : "") + (this.escapedTableName ? this.escapedTableName + "." : "") + this.escapedColumnName;
+		return (this.escapedDbName ? this.escapedDbName + "." : "") + (this.escapedTableName ? this.escapedTableName + "." : "") + this.escapedColumnName;
 	}
 	public get aliasedColumnFullIdentifier(): string {
-		return this.data.userColumnAlias != this.escapedColumnName ? this.columnFullIdentifier + " AS " + this.data.userColumnAlias : this.columnFullIdentifier;
+		return this.escapedUserColumnAlias != this.escapedColumnName ? this.columnFullIdentifier + " AS " + this.escapedUserColumnAlias : this.columnFullIdentifier;
 	}
 	public castValue(value: any): Ty {
 		return this.data.castValue(value);
