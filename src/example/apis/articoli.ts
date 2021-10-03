@@ -20,12 +20,23 @@ db.exposeSelectPaged("/articoli/get", {
 db.exposeInsert("/articoli/add", articoli);
 */
 
-let query1 = db.prepareSelect({
+let query0 = db.select({
 	from: articoli.innerJoin(unitaDiMisura),
 	fields: [
 		articoli.id,
 		articoli.codice,
-		unitaDiMisura.descrizione.as("unitaDiMisura")
+		unitaDiMisura.descrizione.as("unitaDiMisura"),
+		articoli.classificazione,
+	]
+}).asJoinable();
+
+let query1 = db.prepareSelect({
+	from: query0.innerJoin(classificazione),
+	fields: [
+		query0.id,
+		query0.codice,
+		query0.unitaDiMisura,
+		classificazione.value.as("classificazione"),
 	]
 });
 

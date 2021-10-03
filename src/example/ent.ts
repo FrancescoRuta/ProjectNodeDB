@@ -1,10 +1,12 @@
 import { ForeignKey, QueryColumn, Table } from "../project/entities";
 
 export class Persone extends Table {
-	protected __alias: string;
+	protected __escapedAlias: string;
+	protected __unescapedAlias: string;
 	public constructor(alias?: string) {
 		super();
-		this.__alias = alias ?? "persone";
+		this.__unescapedAlias = alias ?? "persone";
+		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
@@ -23,55 +25,50 @@ export class Persone extends Table {
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
-			unescapedDbName: "prove",
 			rawTableName: "persone",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "id",
-			userColumnAlias: "id",
+			unescapedUserColumnAlias: "id",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get comune(): QueryColumn<"comune", string> {
 		return new QueryColumn({
-			unescapedDbName: "prove",
 			rawTableName: "persone",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "comune",
-			userColumnAlias: "comune",
+			unescapedUserColumnAlias: "comune",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get dataNascita(): QueryColumn<"dataNascita", Date> {
 		return new QueryColumn({
-			unescapedDbName: "prove",
 			rawTableName: "persone",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "data_nascita",
-			userColumnAlias: "dataNascita",
+			unescapedUserColumnAlias: "dataNascita",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get nome(): QueryColumn<"nome", string> {
 		return new QueryColumn({
-			unescapedDbName: "prove",
 			rawTableName: "persone",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "nome",
-			userColumnAlias: "nome",
+			unescapedUserColumnAlias: "nome",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get cognome(): QueryColumn<"cognome", string> {
 		return new QueryColumn({
-			unescapedDbName: "prove",
 			rawTableName: "persone",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "cognome",
-			userColumnAlias: "cognome",
+			unescapedUserColumnAlias: "cognome",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
@@ -81,10 +78,12 @@ export class Persone extends Table {
 }
 
 export class Comuni extends Table {
-	protected __alias: string;
+	protected __escapedAlias: string;
+	protected __unescapedAlias: string;
 	public constructor(alias?: string) {
 		super();
-		this.__alias = alias ?? "Comuni";
+		this.__unescapedAlias = alias ?? "Comuni";
+		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
@@ -103,31 +102,28 @@ export class Comuni extends Table {
 	
 	public get comune(): QueryColumn<"comune", string> {
 		return new QueryColumn({
-			unescapedDbName: "prove",
 			rawTableName: "comuni",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "comune",
-			userColumnAlias: "comune",
+			unescapedUserColumnAlias: "comune",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	public get provincia(): QueryColumn<"provincia", string> {
 		return new QueryColumn({
-			unescapedDbName: "prove",
 			rawTableName: "comuni",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "provincia",
-			userColumnAlias: "provincia",
+			unescapedUserColumnAlias: "provincia",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
-			unescapedDbName: "prove",
 			rawTableName: "comuni",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "id",
-			userColumnAlias: "id",
+			unescapedUserColumnAlias: "id",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
@@ -137,10 +133,12 @@ export class Comuni extends Table {
 }
 
 export class ChkinIngressi extends Table {
-	protected __alias: string;
+	protected __escapedAlias: string;
+	protected __unescapedAlias: string;
 	public constructor(alias?: string) {
 		super();
-		this.__alias = alias ?? "chkinIngressi";
+		this.__unescapedAlias = alias ?? "chkinIngressi";
+		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
@@ -163,54 +161,52 @@ export class ChkinIngressi extends Table {
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
-			unescapedDbName: "falegnameria",
 			rawTableName: "chkin_ingressi",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "id",
-			userColumnAlias: "id",
+			unescapedUserColumnAlias: "id",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get idUtente(): QueryColumn<"idUtente", string> {
 		return new QueryColumn({
-			unescapedDbName: "falegnameria",
 			rawTableName: "chkin_ingressi",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "id_utente",
-			userColumnAlias: "idUtente",
+			unescapedUserColumnAlias: "idUtente",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get entrata(): QueryColumn<"entrata", string> {
 		return new QueryColumn({
-			unescapedDbName: "falegnameria",
 			rawTableName: "chkin_ingressi",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "entrata",
-			userColumnAlias: "entrata",
+			unescapedUserColumnAlias: "entrata",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get uscita(): QueryColumn<"uscita", string> {
 		return new QueryColumn({
-			unescapedDbName: "falegnameria",
 			rawTableName: "chkin_ingressi",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "uscita",
-			userColumnAlias: "uscita",
+			unescapedUserColumnAlias: "uscita",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 }
 
 export class MngUtenti extends Table{
-	protected __alias: string;
+	protected __escapedAlias: string;
+	protected __unescapedAlias: string;
 	public constructor(alias?: string) {
 		super();
-		this.__alias = alias ?? "MngUtenti";
+		this.__unescapedAlias = alias ?? "MngUtenti";
+		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
@@ -227,32 +223,32 @@ export class MngUtenti extends Table{
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
-			unescapedDbName: "falegnameria",
 			rawTableName: "mng_utenti",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "id",
-			userColumnAlias: "id",
+			unescapedUserColumnAlias: "id",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get username(): QueryColumn<"username", string> {
 		return new QueryColumn({
-			unescapedDbName: "falegnameria",
 			rawTableName: "mng_utenti",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "username",
-			userColumnAlias: "username",
+			unescapedUserColumnAlias: "username",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 }
 
 export class Articoli extends Table{
-	protected __alias: string;
+	protected __escapedAlias: string;
+	protected __unescapedAlias: string;
 	public constructor(alias?: string) {
 		super();
-		this.__alias = alias ?? "Articoli";
+		this.__unescapedAlias = alias ?? "Articoli";
+		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
@@ -277,68 +273,68 @@ export class Articoli extends Table{
 		return escapeFunction("articoli");
 	}
 	
+	public get All(): [typeof this.id, typeof this.unitaMisura] {
+		return [this.id, this.unitaMisura];
+	}
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "articoli",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "id",
-			userColumnAlias: "id",
+			unescapedUserColumnAlias: "id",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get unitaMisura(): QueryColumn<"unitaMisura", number> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "articoli",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "unita_misura",
-			userColumnAlias: "unitaMisura",
+			unescapedUserColumnAlias: "unitaMisura",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get classificazione(): QueryColumn<"classificazione", number> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "articoli",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "classificazione",
-			userColumnAlias: "classificazione",
+			unescapedUserColumnAlias: "classificazione",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get codice(): QueryColumn<"codice", string> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "articoli",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "codice",
-			userColumnAlias: "codice",
+			unescapedUserColumnAlias: "codice",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get descrizione(): QueryColumn<"descrizione", string> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "articoli",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "descrizione",
-			userColumnAlias: "descrizione",
+			unescapedUserColumnAlias: "descrizione",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 }
 
 export class UnitaDiMisura extends Table{
-	protected __alias: string;
+	protected __escapedAlias: string;
+	protected __unescapedAlias: string;
 	public constructor(alias?: string) {
 		super();
-		this.__alias = alias ?? "UnitaDiMisura";
+		this.__unescapedAlias = alias ?? "UnitaDiMisura";
+		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
 	}
 	
 	protected get __foreignKeys(): ForeignKey[] {
@@ -356,43 +352,42 @@ export class UnitaDiMisura extends Table{
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "unita_di_misura",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "id",
-			userColumnAlias: "id",
+			unescapedUserColumnAlias: "id",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get simbolo(): QueryColumn<"simbolo", string> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "unita_di_misura",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "simbolo",
-			userColumnAlias: "simbolo",
+			unescapedUserColumnAlias: "simbolo",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get descrizione(): QueryColumn<"descrizione", string> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "unita_di_misura",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "descrizione",
-			userColumnAlias: "descrizione",
+			unescapedUserColumnAlias: "descrizione",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 }
 
 export class ArticoliClassificazione extends Table{
-	protected __alias: string;
+	protected __escapedAlias: string;
+	protected __unescapedAlias: string;
 	public constructor(alias?: string) {
 		super();
-		this.__alias = alias ?? "ArticoliClassificazione";
+		this.__unescapedAlias = alias ?? "ArticoliClassificazione";
+		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
 	}
 	
 	protected get __foreignKeys(): ForeignKey[] {
@@ -416,55 +411,50 @@ export class ArticoliClassificazione extends Table{
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "articoli__classificazione",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "id",
-			userColumnAlias: "id",
+			unescapedUserColumnAlias: "id",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get idParent(): QueryColumn<"idParent", string> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "articoli__classificazione",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "id_parent",
-			userColumnAlias: "idParent",
+			unescapedUserColumnAlias: "idParent",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get path(): QueryColumn<"path", string> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "articoli__classificazione",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "path",
-			userColumnAlias: "path",
+			unescapedUserColumnAlias: "path",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get value(): QueryColumn<"value", string> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "articoli__classificazione",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "value",
-			userColumnAlias: "value",
+			unescapedUserColumnAlias: "value",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
 	
 	public get fullDescPath(): QueryColumn<"fullDescPath", string> {
 		return new QueryColumn({
-			unescapedDbName: "chimiclean",
 			rawTableName: "articoli__classificazione",
-			unescapedTableName: this.__alias,
+			unescapedTableName: this.__unescapedAlias,
 			unescapedColumnName: "full_desc_path",
-			userColumnAlias: "fullDescPath",
+			unescapedUserColumnAlias: "fullDescPath",
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}

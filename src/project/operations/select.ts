@@ -8,18 +8,19 @@ import {
 	QueryColumn,
 } from "../entities";
 import { PreparedQuery } from "../prepared_query";
-import { getPositionalQuery, replaceColumnPlaceholders, tokenizeSqlString } from "../sql_helper";
+import { getPositionalQuery, replaceColumnPlaceholders } from "../sql_helper";
 
 export type JoinableSelectWithFileds<F> = Joinable & F;
 
-export type ObjKeyMap<T> = T extends infer U ? { [K in keyof U]: U[K] } : never
+export type ObjKeyMap<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
 export type ConcatTypesToQueryColumn<N extends string, T, R> = ObjKeyMap<{[J in N]: QueryColumn<N, T>} & R>;
 export type ColTypeRecursionToQueryColumn<A extends readonly [...any]> = A extends [infer L, ...infer R] ? (
 		L extends QueryColumn<infer N, infer T> ? ConcatTypesToQueryColumn<N, T, ColTypeRecursionToQueryColumn<R>> : ColTypeRecursionToQueryColumn<R>
 	) : unknown;
-export type ConcatTypesTo<N extends string, T, R> = ObjKeyMap<{[J in N]: T} & R>;
+
+export type ConcatTypes<N extends string, T, R> = ObjKeyMap<{[J in N]: T} & R>;
 export type ColTypeRecursion<A extends readonly [...any]> = A extends [infer L, ...infer R] ? (
-		L extends QueryColumn<infer N, infer T> ? ConcatTypesTo<N, T, ColTypeRecursion<R>> : ColTypeRecursion<R>
+		L extends QueryColumn<infer N, infer T> ? ConcatTypes<N, T, ColTypeRecursion<R>> : ColTypeRecursion<R>
 	) : unknown;
 	
 export interface SelectParams<D, F extends QueryColumn<string, any>[]> {
@@ -36,17 +37,16 @@ export interface SelectParams<D, F extends QueryColumn<string, any>[]> {
 }
 
 class JoinableSelect<D, F extends QueryColumn<string, any>[]> extends Joinable {
-	private foreignKeys: ForeignKey[];
-	private primaryKeys: JoinablePrimaryKey[];
+	protected __foreignKeys: ForeignKey[];
+	protected __primaryKeys: JoinablePrimaryKey[];
 	public constructor(private sql: string, alias: string, selectParams: SelectParams<D, F>, private entityBindings: any, private escapeFunction: (ident: string) => string) {
 		super();
 		let fields = selectParams.fields ? Array.isArray(selectParams.fields) ? selectParams.fields : [selectParams.fields] : undefined;
 		let { __foreignKeys, __primaryKeys }: { __foreignKeys: ForeignKey[], __primaryKeys: JoinablePrimaryKey[] } = <any>selectParams.from;
-		[__foreignKeys, __primaryKeys] = this.filterKeys(fields, alias, __foreignKeys, __primaryKeys);
-		this.foreignKeys = __foreignKeys;
-		this.primaryKeys = __primaryKeys;
+		[this.__foreignKeys, this.__primaryKeys] = this.filterKeys(fields, alias, __foreignKeys, __primaryKeys);
 	}
 	private filterKeys(fields: QueryColumn<string, any>[] | undefined, alias: string, __foreignKeys: ForeignKey[], __primaryKeys: JoinablePrimaryKey[]): [ForeignKey[], JoinablePrimaryKey[]] {
+		//TODO: fix
 		if (fields) {
 			let fks = [];
 			let pks = [];
@@ -56,10 +56,9 @@ class JoinableSelect<D, F extends QueryColumn<string, any>[]> extends Joinable {
 				if (fk) {
 					//field is a foreign key
 					let data = field.getData();
-					data.unescapedDbName = undefined;
 					data.unescapedTableName = alias;
-					data.unescapedColumnName = data.userColumnAlias;
-					data.userColumnAlias;
+					data.unescapedColumnName = data.unescapedUserColumnAlias;
+					data.unescapedUserColumnAlias;
 					fks.push({
 						column: new QueryColumn(data, this.escapeFunction),
 						tableName: fk.tableName,
@@ -69,10 +68,9 @@ class JoinableSelect<D, F extends QueryColumn<string, any>[]> extends Joinable {
 				if (pk) {
 					//field is a primary key
 					let data = field.getData();
-					data.unescapedDbName = undefined;
 					data.unescapedTableName = alias;
-					data.unescapedColumnName = data.userColumnAlias;
-					data.userColumnAlias;
+					data.unescapedColumnName = data.unescapedUserColumnAlias;
+					data.unescapedUserColumnAlias;
 					pks.push({
 						column: new QueryColumn(data, this.escapeFunction),
 						tableName: pk.tableName,
@@ -87,12 +85,6 @@ class JoinableSelect<D, F extends QueryColumn<string, any>[]> extends Joinable {
 	}
 	protected get __entityBindings(): any {
 		return this.entityBindings;
-	}
-	protected get __foreignKeys(): ForeignKey[] {
-		return this.foreignKeys;
-	}
-	protected get __primaryKeys(): JoinablePrimaryKey[] {
-		return this.primaryKeys;
 	}
 	protected get __sqlFrom(): string {
 		return this.sql;
@@ -151,7 +143,7 @@ export class Select<D, F extends QueryColumn<string, any>[]> extends BindableEni
 		let res = this.createJoinableProxy(
 			alias,
 			new JoinableSelect(
-				"(" + this.__sql + ") AS " + alias,
+				"(" + this.__sql + ") AS " + this.escapeFunction(alias),
 				alias,
 				this.selectParams,
 				entityBinding,
@@ -162,8 +154,13 @@ export class Select<D, F extends QueryColumn<string, any>[]> extends BindableEni
 		return res as JoinableSelectWithFileds<ColTypeRecursionToQueryColumn<F>>;
 	}
 	private createJoinableProxy(alias: string, joinableSelect: JoinableSelect<D, F>): any {
-		let fields: {[alias: string]: QueryColumn<string, any>} = {};
-		(this.selectParams.fields ?? []).forEach(f => fields[f.unescapedUserColumnAlias] = f);
+		let fields: {[a: string]: QueryColumn<string, any>} = {};
+		(this.selectParams.fields ?? []).forEach(f => {
+			let data = f.getData();
+			data.unescapedTableName = alias;
+			data.unescapedColumnName = data.unescapedUserColumnAlias;
+			fields[f.unescapedUserColumnAlias] = new QueryColumn(data, this.escapeFunction);
+		});
 		return new Proxy(joinableSelect, {
 			get: (target: any, key) => {
 				let k = key.toString();
