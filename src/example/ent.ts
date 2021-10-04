@@ -19,7 +19,7 @@ export class Persone<Alias extends string> extends Table<[QueryColumn<"id", numb
 		return [
 			{
 				column: this.comune,
-				tableName: escapeFunction("comuni"),
+				tableName: "comuni",
 				ambiguous: false,
 			},
 		];
@@ -106,7 +106,7 @@ export class Comuni<Alias extends string> extends Table<[QueryColumn<"id", numbe
 		return [
 			{
 				column: this.provincia,
-				tableName: escapeFunction("comuni"),
+				tableName: "comuni",
 				ambiguous: false,
 			},
 		];
@@ -152,7 +152,7 @@ export class Comuni<Alias extends string> extends Table<[QueryColumn<"id", numbe
 	}
 }
 
-export class ChkinIngressi<Alias extends string> extends Table<[QueryColumn<"id", number>, QueryColumn<"idUtente", string>, QueryColumn<"entrata", string>, QueryColumn<"uscita", string>]> {
+export class ChkinIngressi<Alias extends string> extends Table<[QueryColumn<"id", number>, QueryColumn<"idUtente", number>, QueryColumn<"entrata", string>, QueryColumn<"uscita", string>]> {
 	protected __escapedAlias: string;
 	protected __unescapedAlias: Alias;
 	private constructor(alias: Alias) {
@@ -171,7 +171,7 @@ export class ChkinIngressi<Alias extends string> extends Table<[QueryColumn<"id"
 		return [
 			{
 				column: this.idUtente,
-				tableName: escapeFunction("mng_utenti"),
+				tableName: "mng_utenti",
 				ambiguous: false,
 			},
 		];
@@ -199,7 +199,7 @@ export class ChkinIngressi<Alias extends string> extends Table<[QueryColumn<"id"
 		}, escapeFunction);
 	}
 	
-	public get idUtente(): QueryColumn<"idUtente", string> {
+	public get idUtente(): QueryColumn<"idUtente", number> {
 		return new QueryColumn({
 			rawTableName: "chkin_ingressi",
 			unescapedTableName: this.__unescapedAlias,
@@ -245,7 +245,7 @@ export class MngUtenti<Alias extends string> extends Table<[QueryColumn<"id", nu
 		return new MngUtenti(alias);
 	}
 
-	protected get __foreignKeys(): ForeignKey[] {
+	protected get __foreignKeys(): [] {
 		return [];
 	}
 
@@ -301,11 +301,11 @@ export class Articoli<Alias extends string> extends Table<[QueryColumn<"id", num
 		return [
 			{
 				column: this.unitaMisura,
-				tableName: escapeFunction("unita_di_misura"),
+				tableName: "unita_di_misura",
 				ambiguous: false,
 			}, {
 				column: this.classificazione,
-				tableName: escapeFunction("articoli__classificazione"),
+				tableName: "articoli__classificazione",
 				ambiguous: false,
 			}
 		];
@@ -389,7 +389,7 @@ export class UnitaDiMisura<Alias extends string> extends Table<[QueryColumn<"id"
 		return new UnitaDiMisura(alias);
 	}
 	
-	protected get __foreignKeys(): ForeignKey[] {
+	protected get __foreignKeys(): [] {
 		return [];
 	}
 	
@@ -455,7 +455,7 @@ export class ArticoliClassificazione<Alias extends string> extends Table<[QueryC
 		return [
 			{
 				column: this.idParent,
-				tableName: this.__tableName,
+				tableName: "articoli__classificazione",
 				ambiguous: false,
 			}
 		];

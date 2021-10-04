@@ -138,11 +138,7 @@ export abstract class Joinable<F extends GenericQueryColumn[]> extends SqlFrom {
 		);
 	}
 
-	private __genericJoin<A extends any[]>(
-		other: Joinable<A>,
-		joinType: "INNER" | "LEFT" | "RIGHT",
-		joinOn?: [GenericQueryColumn, GenericQueryColumn]
-	): Joinable<[...F, ...A]> {
+	private __genericJoin<A extends any[]>(other: Joinable<A>, joinType: "INNER" | "LEFT" | "RIGHT", joinOn?: [GenericQueryColumn, GenericQueryColumn]): Joinable<[...F, ...A]> {
 		let joinOnStr: [string, string];
 		if (!joinOn) {
 			let ambiguousError = `Ambiguous join between "${this.__sqlFrom}" and "${other.__sqlFrom}"`;
@@ -261,11 +257,13 @@ export class JoinResult<F extends any[]> extends Joinable<F> {
 	}
 }
 
-export abstract class Table<F extends GenericQueryColumn[]> extends Joinable<F> {
+export type GenericTable = Table<GenericQueryColumn[]>;
+export abstract class Table<Columns extends GenericQueryColumn[]> extends Joinable<Columns> {
 	protected abstract get __primaryKey(): GenericQueryColumn | null;
 	protected abstract get __tableName(): string;
 	protected abstract get __escapedAlias(): string;
 	protected abstract get __unescapedAlias(): string;
+	protected abstract get __foreignKeys(): ForeignKey[];
 	protected get __primaryKeys(): JoinablePrimaryKey[] {
 		if (this.__primaryKey == null) return [];
 		return [

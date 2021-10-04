@@ -1,11 +1,11 @@
 import { IDbEngine } from "../db_engine";
 import { DbInterfaceConfig, ExecuteBefore } from "../db_interface";
-import { GenericQueryColumn, QueryColumn, Table } from "../entities";
+import { GenericQueryColumn, GenericTable, QueryColumn, Table } from "../entities";
 import { PreparedQuery } from "../prepared_query";
 import { getPositionalQuery } from "../sql_helper";
 
-export type InsertParams<D> = Table<any[]> | {
-	table: Table<any[]>;
+export type InsertParams<D> = GenericTable | {
+	table: GenericTable;
 	fields?: (GenericQueryColumn | [GenericQueryColumn, string])[];
 	dbEngineArgs?: D;
 }

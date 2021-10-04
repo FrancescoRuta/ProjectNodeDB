@@ -13,10 +13,7 @@ import { getPositionalQuery, replaceColumnPlaceholders } from "../sql_helper";
 
 export type JoinableSelectWithFileds<F extends GenericQueryColumn[], A> = Joinable<F> & A;
 
-export type ObjKeyMap2<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
-/*type ColTypeRecursionToQueryColumn<A extends readonly [...any[]]> = A extends [infer L, ...infer R] ? (
-	L extends QueryColumn<infer N, infer T> ? {[J in N]: QueryColumn<N, T>} & ColTypeRecursionToQueryColumn<R> : ColTypeRecursionToQueryColumn<R>
-) : unknown;*/
+export type ObjKeyMap<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
 export type ColTypeRecursionToQueryColumn<A extends readonly [...any[]]> =
 	A extends [
 		infer L0,  infer L1,  infer L2,  infer L3,  infer L4,  infer L5,  infer L6,  infer L7,  infer L8,  infer L9,  infer L10, infer L11,
@@ -90,7 +87,7 @@ class JoinableSelect<D, F extends GenericQueryColumn[]> extends Joinable<F> {
 		return this.__all;
 	}
 	private filterKeys(fields: GenericQueryColumn[], alias: string, __foreignKeys: ForeignKey[], __primaryKeys: JoinablePrimaryKey[]): [ForeignKey[], JoinablePrimaryKey[]] {
-		let fks = [];
+		let fks: ForeignKey[] = [];
 		let pks = [];
 		for (let field of fields) {
 			let fk = __foreignKeys.find(fk => field.columnFullIdentifier == fk.column.columnFullIdentifier);
@@ -201,7 +198,7 @@ export class Select<D, F extends GenericQueryColumn[]> extends BindableEnity {
 			all
 		);
 		entityBinding[alias] = res;
-		return res as JoinableSelectWithFileds<F, ObjKeyMap2<ColTypeRecursionToQueryColumn<F>>>;
+		return res as JoinableSelectWithFileds<F, ObjKeyMap<ColTypeRecursionToQueryColumn<F>>>;
 	}
 	private createJoinableProxy(alias: string, joinableSelect: JoinableSelect<D, F>, all: GenericQueryColumn[]): any {
 		let fields: {[a: string]: GenericQueryColumn} = {};
@@ -222,11 +219,11 @@ export class Select<D, F extends GenericQueryColumn[]> extends BindableEnity {
 	public get hasHardLimit(): boolean {
 		return this.selectParams.limitSize != null;
 	}
-	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T, D>, executeBefore: ExecuteBefore<void>): PreparedSelect<D, ObjKeyMap2<ColTypeRecursion<F>>> {
+	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T, D>, executeBefore: ExecuteBefore<void>): PreparedSelect<D, ObjKeyMap<ColTypeRecursion<F>>> {
 		let [sql, paramNames] = getPositionalQuery(this.__sql);
 		return new PreparedSelect(dbInterfaceConfig.dbEngine, sql, paramNames, executeBefore, this.selectParams.dbEngineArgs);
 	}
-	public preparePaged<T>(dbInterfaceConfig: DbInterfaceConfig<T, D>, executeBefore: ExecuteBefore<number | undefined>): PreparedSelectPaged<D, ObjKeyMap2<ColTypeRecursion<F>>> {
+	public preparePaged<T>(dbInterfaceConfig: DbInterfaceConfig<T, D>, executeBefore: ExecuteBefore<number | undefined>): PreparedSelectPaged<D, ObjKeyMap<ColTypeRecursion<F>>> {
 		if (this.hasHardLimit)
 			throw new Error(
 				"Pagination is not allowed for selects with hard limit."

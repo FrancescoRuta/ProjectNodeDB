@@ -1,11 +1,11 @@
 import { IDbEngine } from "../db_engine";
 import { DbInterfaceConfig, ExecuteBefore } from "../db_interface";
-import { GenericQueryColumn, QueryColumn, Table } from "../entities";
+import { GenericQueryColumn, GenericTable, QueryColumn, Table } from "../entities";
 import { PreparedQuery } from "../prepared_query";
 import { getPositionalQuery, replaceColumnPlaceholders } from "../sql_helper";
 
-export type DeleteParams<D> = Table<any[]> | {
-	table: Table<any[]>;
+export type DeleteParams<D> = GenericTable | {
+	table: GenericTable;
 	where?: string;
 	dbEngineArgs?: D;
 }

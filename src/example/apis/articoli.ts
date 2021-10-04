@@ -101,6 +101,7 @@ let query1 = db.prepareSelectPaged({
 		...query0.All,
 	]
 });
+
 async function api() {
 	let rows = await query1.run({pageIndex:0});
 	console.table(rows[0]);
