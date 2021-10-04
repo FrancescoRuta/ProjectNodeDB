@@ -1,17 +1,17 @@
 type JoinKey = {
-	column: QueryColumn<string, any>;
+	column: GenericQueryColumn;
 	tableName: string;
 	ambiguous: boolean;
 };
 
 export interface ForeignKey {
-	column: QueryColumn<string, any>;
+	column: GenericQueryColumn;
 	tableName: string;
 	ambiguous: boolean;
 }
 
 export interface JoinablePrimaryKey {
-	column: QueryColumn<string, any>;
+	column: GenericQueryColumn;
 	tableName: string;
 	ambiguous: boolean;
 }
@@ -25,8 +25,11 @@ export interface QueryColumnData<Name extends string, Ty> {
 	unescapedTableName: string | undefined;
 	unescapedColumnName: string;
 	unescapedUserColumnAlias: Name;
+	sqlValue?: string;
 	castValue: (value: any) => Ty;
 }
+
+export type GenericQueryColumn = QueryColumn<string, any>;
 
 export class QueryColumn<Name extends string, Ty> extends BindableEnity {
 	public constructor(private data: QueryColumnData<Name, Ty>, private escapeFunction: (ident: string) => string) {
@@ -57,7 +60,7 @@ export class QueryColumn<Name extends string, Ty> extends BindableEnity {
 		return this.data.unescapedUserColumnAlias;
 	}
 	public get columnFullIdentifier(): string {
-		return (this.escapedTableName ? this.escapedTableName + "." : "") + this.escapedColumnName;
+		return this.data.sqlValue ? this.data.sqlValue : (this.escapedTableName ? this.escapedTableName + "." : "") + this.escapedColumnName;
 	}
 	public get aliasedColumnFullIdentifier(): string {
 		return this.escapedUserColumnAlias != this.escapedColumnName ? this.columnFullIdentifier + " AS " + this.escapedUserColumnAlias : this.columnFullIdentifier;
@@ -80,12 +83,13 @@ export class QueryColumn<Name extends string, Ty> extends BindableEnity {
 	protected get __enityBinding(): string {
 		return this.columnFullIdentifier;
 	}
-	public static from<A extends string, Ty>(str: string, alias: A, escapeFunction: (ident: string) => string, castValue?: (value: any) => Ty): QueryColumn<A, Ty> {
+	public static from<A extends string, Ty>(sqlValue: string, alias: A, escapeFunction: (ident: string) => string, castValue?: (value: any) => Ty): QueryColumn<A, Ty> {
 		return new QueryColumn({
 			rawTableName: undefined,
 			unescapedTableName: undefined,
 			unescapedColumnName: alias,
 			unescapedUserColumnAlias: alias,
+			sqlValue,
 			castValue: castValue ?? (a => a),
 		}, escapeFunction);
 	}
@@ -96,47 +100,49 @@ export abstract class SqlFrom {
 	protected abstract get __sqlFrom(): string;
 }
 
-export abstract class Joinable extends SqlFrom {
+export abstract class Joinable<F extends GenericQueryColumn[]> extends SqlFrom {
 	protected abstract get __entityBindings(): any;
 	protected abstract get __foreignKeys(): ForeignKey[];
 	protected abstract get __primaryKeys(): JoinablePrimaryKey[];
-
-	public innerJoin(
-		other: Joinable,
-		joinOn?: [QueryColumn<string, any>, QueryColumn<string, any>]
-	): Joinable {
+	public abstract get All(): [...F];
+	
+	public InnerJoin<A extends any[]>(
+		other: Joinable<A>,
+		joinOn?: [GenericQueryColumn, GenericQueryColumn]
+	): Joinable<[...F, ...A]> {
 		return this.__genericJoin(other, "INNER", joinOn);
 	}
 
-	public leftJoin(
-		other: Joinable,
-		joinOn?: [QueryColumn<string, any>, QueryColumn<string, any>]
-	): Joinable {
+	public LeftJoin<A extends any[]>(
+		other: Joinable<A>,
+		joinOn?: [GenericQueryColumn, GenericQueryColumn]
+	): Joinable<[...F, ...A]> {
 		return this.__genericJoin(other, "LEFT", joinOn);
 	}
 
-	public rightJoin(
-		other: Joinable,
-		joinOn?: [QueryColumn<string, any>, QueryColumn<string, any>]
-	): Joinable {
+	public RightJoin<A extends any[]>(
+		other: Joinable<A>,
+		joinOn?: [GenericQueryColumn, GenericQueryColumn]
+	): Joinable<[...F, ...A]> {
 		return this.__genericJoin(other, "RIGHT", joinOn);
 	}
 
-	public naturalJoin(other: Joinable): Joinable {
+	public NaturalJoin<A extends any[]>(other: Joinable<A>): Joinable<[...F, ...A]> {
 		let sql = `(${this.__sqlFrom}), (${other.__sqlFrom})`;
 		return new JoinResult(
 			this.__joinKeys(this.__foreignKeys, other.__foreignKeys),
 			this.__joinKeys(this.__primaryKeys, other.__primaryKeys),
 			sql,
 			{...this.__entityBindings, ...other.__entityBindings},
+			[...this.All, ...other.All],
 		);
 	}
 
-	private __genericJoin(
-		other: Joinable,
+	private __genericJoin<A extends any[]>(
+		other: Joinable<A>,
 		joinType: "INNER" | "LEFT" | "RIGHT",
-		joinOn?: [QueryColumn<string, any>, QueryColumn<string, any>]
-	): Joinable {
+		joinOn?: [GenericQueryColumn, GenericQueryColumn]
+	): Joinable<[...F, ...A]> {
 		let joinOnStr: [string, string];
 		if (!joinOn) {
 			let ambiguousError = `Ambiguous join between "${this.__sqlFrom}" and "${other.__sqlFrom}"`;
@@ -167,6 +173,7 @@ export abstract class Joinable extends SqlFrom {
 			this.__joinKeys(this.__primaryKeys, other.__primaryKeys),
 			sql,
 			{...this.__entityBindings, ...other.__entityBindings},
+			[...this.All, ...other.All],
 		);
 	}
 
@@ -227,12 +234,13 @@ export abstract class Joinable extends SqlFrom {
 	}
 }
 
-export class JoinResult extends Joinable {
+export class JoinResult<F extends any[]> extends Joinable<F> {
 	public constructor(
 		private foreignKeys: ForeignKey[],
 		private primaryKeys: JoinablePrimaryKey[],
 		private sqlFrom: string,
 		private entityBindings: any,
+		private all: [...F],
 	) {
 		super();
 	}
@@ -248,10 +256,13 @@ export class JoinResult extends Joinable {
 	protected get __entityBindings(): any {
 		return this.entityBindings;
 	}
+	public get All(): [...F] {
+		return [...this.all];
+	}
 }
 
-export abstract class Table extends Joinable {
-	protected abstract get __primaryKey(): QueryColumn<string, any> | null;
+export abstract class Table<F extends GenericQueryColumn[]> extends Joinable<F> {
+	protected abstract get __primaryKey(): GenericQueryColumn | null;
 	protected abstract get __tableName(): string;
 	protected abstract get __escapedAlias(): string;
 	protected abstract get __unescapedAlias(): string;

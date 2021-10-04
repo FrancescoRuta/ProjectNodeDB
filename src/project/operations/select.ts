@@ -3,6 +3,7 @@ import { DbInterfaceConfig, ExecuteBefore } from "../db_interface";
 import {
 	BindableEnity,
 	ForeignKey,
+	GenericQueryColumn,
 	Joinable,
 	JoinablePrimaryKey,
 	QueryColumn,
@@ -10,88 +11,128 @@ import {
 import { PreparedQuery } from "../prepared_query";
 import { getPositionalQuery, replaceColumnPlaceholders } from "../sql_helper";
 
-export type JoinableSelectWithFileds<F> = Joinable & F;
+export type JoinableSelectWithFileds<F extends GenericQueryColumn[], A> = Joinable<F> & A;
 
-export type ObjKeyMap<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
-export type ConcatTypesToQueryColumn<N extends string, T, R> = ObjKeyMap<{[J in N]: QueryColumn<N, T>} & R>;
-export type ColTypeRecursionToQueryColumn<A extends readonly [...any]> = A extends [infer L, ...infer R] ? (
-		L extends QueryColumn<infer N, infer T> ? ConcatTypesToQueryColumn<N, T, ColTypeRecursionToQueryColumn<R>> : ColTypeRecursionToQueryColumn<R>
-	) : unknown;
+export type ObjKeyMap2<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
+/*type ColTypeRecursionToQueryColumn<A extends readonly [...any[]]> = A extends [infer L, ...infer R] ? (
+	L extends QueryColumn<infer N, infer T> ? {[J in N]: QueryColumn<N, T>} & ColTypeRecursionToQueryColumn<R> : ColTypeRecursionToQueryColumn<R>
+) : unknown;*/
+export type ColTypeRecursionToQueryColumn<A extends readonly [...any[]]> =
+	A extends [
+		infer L0,  infer L1,  infer L2,  infer L3,  infer L4,  infer L5,  infer L6,  infer L7,  infer L8,  infer L9,  infer L10, infer L11,
+		infer L12, infer L13, infer L14, infer L15, infer L16, infer L17, infer L18, infer L19, infer L20, infer L21, infer L22, infer L23,
+		infer L24, infer L25, infer L26, infer L27, infer L28, infer L29, infer L30, infer L31, infer L32, infer L33, infer L34, infer L35,
+		infer L36, infer L37, infer L38, infer L39, infer L40, infer L41, infer L42, infer L43, infer L44, infer L45, infer L46, infer L47, ...infer R] ? (
+		ColTypeRecursionToQueryColumn<[L0,  L1,  L2,  L3,  L4,  L5,  L6,  L7,  L8,  L9,  L10, L11]> &
+		ColTypeRecursionToQueryColumn<[L12, L13, L14, L15, L16, L17, L18, L19, L20, L21, L22, L23]> &
+		ColTypeRecursionToQueryColumn<[L24, L25, L26, L27, L28, L29, L30, L31, L32, L33, L34, L35]> &
+		ColTypeRecursionToQueryColumn<[L36, L37, L38, L39, L40, L41, L42, L43, L44, L45, L46, L47]> &
+		ColTypeRecursionToQueryColumn<R>
+	)
+	:
+	A extends [infer L0, infer L1, infer L2, infer L3, infer L4, infer L5, infer L6, infer L7, infer L8, infer L9, infer L10, infer L11, ...infer R] ? (
+		L0 extends QueryColumn<infer N, infer T> ? (
+			{[J in N]: QueryColumn<N, T>} & ColTypeRecursionToQueryColumn<[L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11]> & ColTypeRecursionToQueryColumn<R>
+		) : never
+	)
+	:
+	A extends [infer L, ...infer R] ? (
+		L extends QueryColumn<infer N, infer T> ? {[J in N]: QueryColumn<N, T>} & ColTypeRecursionToQueryColumn<R> : never
+	)
+: unknown;
+export type ColTypeRecursion<A extends readonly [...any[]]> =
+	A extends [
+		infer L0,  infer L1,  infer L2,  infer L3,  infer L4,  infer L5,  infer L6,  infer L7,  infer L8,  infer L9,  infer L10, infer L11,
+		infer L12, infer L13, infer L14, infer L15, infer L16, infer L17, infer L18, infer L19, infer L20, infer L21, infer L22, infer L23,
+		infer L24, infer L25, infer L26, infer L27, infer L28, infer L29, infer L30, infer L31, infer L32, infer L33, infer L34, infer L35,
+		infer L36, infer L37, infer L38, infer L39, infer L40, infer L41, infer L42, infer L43, infer L44, infer L45, infer L46, infer L47, ...infer R] ? (
+		ColTypeRecursion<[L0,  L1,  L2,  L3,  L4,  L5,  L6,  L7,  L8,  L9,  L10, L11]> &
+		ColTypeRecursion<[L12, L13, L14, L15, L16, L17, L18, L19, L20, L21, L22, L23]> &
+		ColTypeRecursion<[L24, L25, L26, L27, L28, L29, L30, L31, L32, L33, L34, L35]> &
+		ColTypeRecursion<[L36, L37, L38, L39, L40, L41, L42, L43, L44, L45, L46, L47]> &
+		ColTypeRecursion<R>
+	)
+	:
+	A extends [infer L0, infer L1, infer L2, infer L3, infer L4, infer L5, infer L6, infer L7, infer L8, infer L9, infer L10, infer L11, ...infer R] ? (
+		L0 extends QueryColumn<infer N, infer T> ? (
+			{[J in N]: T} & ColTypeRecursion<[L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11]> & ColTypeRecursion<R>
+		) : never
+	)
+	:
+	A extends [infer L, ...infer R] ? (
+		L extends QueryColumn<infer N, infer T> ? {[J in N]: T} & ColTypeRecursion<R> : never
+	)
+: unknown;
 
-export type ConcatTypes<N extends string, T, R> = ObjKeyMap<{[J in N]: T} & R>;
-export type ColTypeRecursion<A extends readonly [...any]> = A extends [infer L, ...infer R] ? (
-		L extends QueryColumn<infer N, infer T> ? ConcatTypes<N, T, ColTypeRecursion<R>> : ColTypeRecursion<R>
-	) : unknown;
-	
-export interface SelectParams<D, F extends QueryColumn<string, any>[]> {
-	from: Joinable;
-	fields?: [...F];
+export interface SelectParams<D, F extends GenericQueryColumn[]> {
+	from: Joinable<GenericQueryColumn[]>;
+	fields: [...F];
 	where?: string;
-	groupBy?: QueryColumn<string, any> | string | (QueryColumn<string, any> | string)[];
+	groupBy?: GenericQueryColumn | string | (GenericQueryColumn | string)[];
 	having?: string;
-	orderBy?: QueryColumn<string, any> | string | (QueryColumn<string, any> | string)[];
+	orderBy?: GenericQueryColumn | string | (GenericQueryColumn | string)[];
 	limitOffset?: number;
 	limitSize?: number;
 	additionalBindableEntities?: any;
 	dbEngineArgs?: D;
 }
 
-class JoinableSelect<D, F extends QueryColumn<string, any>[]> extends Joinable {
+class JoinableSelect<D, F extends GenericQueryColumn[]> extends Joinable<F> {
 	protected __foreignKeys: ForeignKey[];
 	protected __primaryKeys: JoinablePrimaryKey[];
-	public constructor(private sql: string, alias: string, selectParams: SelectParams<D, F>, private entityBindings: any, private escapeFunction: (ident: string) => string) {
+	public constructor(private sql: string, private __alias: string, private __selectParams: SelectParams<D, F>, private ___entityBindings: any, private __escapeFunction: (ident: string) => string, private __all: [...F]) {
 		super();
-		let fields = selectParams.fields ? Array.isArray(selectParams.fields) ? selectParams.fields : [selectParams.fields] : undefined;
-		let { __foreignKeys, __primaryKeys }: { __foreignKeys: ForeignKey[], __primaryKeys: JoinablePrimaryKey[] } = <any>selectParams.from;
-		[this.__foreignKeys, this.__primaryKeys] = this.filterKeys(fields, alias, __foreignKeys, __primaryKeys);
+		let fields = Array.isArray(__selectParams.fields) ? __selectParams.fields : [__selectParams.fields];
+		let { __foreignKeys, __primaryKeys }: { __foreignKeys: ForeignKey[], __primaryKeys: JoinablePrimaryKey[] } = <any>__selectParams.from;
+		[this.__foreignKeys, this.__primaryKeys] = this.filterKeys(fields, __alias, __foreignKeys, __primaryKeys);
 	}
-	private filterKeys(fields: QueryColumn<string, any>[] | undefined, alias: string, __foreignKeys: ForeignKey[], __primaryKeys: JoinablePrimaryKey[]): [ForeignKey[], JoinablePrimaryKey[]] {
-		//TODO: fix
-		if (fields) {
-			let fks = [];
-			let pks = [];
-			for (let field of fields) {
-				let fk = __foreignKeys.find(fk => field.columnFullIdentifier == fk.column.columnFullIdentifier);
-				let pk = __primaryKeys.find(pk => field.columnFullIdentifier == pk.column.columnFullIdentifier);
-				if (fk) {
-					//field is a foreign key
-					let data = field.getData();
-					data.unescapedTableName = alias;
-					data.unescapedColumnName = data.unescapedUserColumnAlias;
-					data.unescapedUserColumnAlias;
-					fks.push({
-						column: new QueryColumn(data, this.escapeFunction),
-						tableName: fk.tableName,
-						ambiguous: fk.ambiguous,
-					});
-				}
-				if (pk) {
-					//field is a primary key
-					let data = field.getData();
-					data.unescapedTableName = alias;
-					data.unescapedColumnName = data.unescapedUserColumnAlias;
-					data.unescapedUserColumnAlias;
-					pks.push({
-						column: new QueryColumn(data, this.escapeFunction),
-						tableName: pk.tableName,
-						ambiguous: pk.ambiguous,
-					});
-				}
+	public get All(): [...F] {
+		return this.__all;
+	}
+	private filterKeys(fields: GenericQueryColumn[], alias: string, __foreignKeys: ForeignKey[], __primaryKeys: JoinablePrimaryKey[]): [ForeignKey[], JoinablePrimaryKey[]] {
+		let fks = [];
+		let pks = [];
+		for (let field of fields) {
+			let fk = __foreignKeys.find(fk => field.columnFullIdentifier == fk.column.columnFullIdentifier);
+			let pk = __primaryKeys.find(pk => field.columnFullIdentifier == pk.column.columnFullIdentifier);
+			if (fk) {
+				//field is a foreign key
+				let data = field.getData();
+				data.unescapedTableName = alias;
+				data.unescapedColumnName = data.unescapedUserColumnAlias;
+				data.unescapedUserColumnAlias;
+				fks.push({
+					column: new QueryColumn(data, this.__escapeFunction),
+					tableName: fk.tableName,
+					ambiguous: fk.ambiguous,
+				});
 			}
-			__foreignKeys = fks;
-			__primaryKeys = pks;
+			if (pk) {
+				//field is a primary key
+				let data = field.getData();
+				data.unescapedTableName = alias;
+				data.unescapedColumnName = data.unescapedUserColumnAlias;
+				data.unescapedUserColumnAlias;
+				pks.push({
+					column: new QueryColumn(data, this.__escapeFunction),
+					tableName: pk.tableName,
+					ambiguous: pk.ambiguous,
+				});
+			}
 		}
+		__foreignKeys = fks;
+		__primaryKeys = pks;
 		return [__foreignKeys, __primaryKeys];
 	}
 	protected get __entityBindings(): any {
-		return this.entityBindings;
+		return this.___entityBindings;
 	}
 	protected get __sqlFrom(): string {
 		return this.sql;
 	}
 }
 
-export class Select<D, F extends QueryColumn<string, any>[]> extends BindableEnity {
+export class Select<D, F extends GenericQueryColumn[]> extends BindableEnity {
 	private __sql: string;
 	private static aliasUid = 0;
 	public constructor(private selectParams: SelectParams<D, F>, private escapeFunction: (ident: string) => string) {
@@ -99,8 +140,8 @@ export class Select<D, F extends QueryColumn<string, any>[]> extends BindableEni
 		this.__sql = this.computeSql();
 	}
 	private computeSql(): string {
-		let fieldsArr = this.selectParams.fields ? (Array.isArray(this.selectParams.fields) ? this.selectParams.fields : [this.selectParams.fields]) : undefined;
-		let fields: string = fieldsArr ? fieldsArr.map(a => a.aliasedColumnFullIdentifier).join(",") : "*";
+		let fieldsArr = (Array.isArray(this.selectParams.fields) ? this.selectParams.fields : [this.selectParams.fields]);
+		let fields: string = fieldsArr.map(a => a.aliasedColumnFullIdentifier).join(",");
 		let { from, limitOffset, limitSize, where, groupBy, having, orderBy } = this.selectParams;
 
 		let limit = limitSize ? ` LIMIT ${limitOffset ? limitOffset + "," : ""}${limitSize}` : "";
@@ -124,7 +165,7 @@ export class Select<D, F extends QueryColumn<string, any>[]> extends BindableEni
 			.trim();
 	}
 
-	private clauseToString(clause: "GROUP BY" | "ORDER BY" | "WHERE" | "HAVING", content: undefined | QueryColumn<string, any> | string | (QueryColumn<string, any> | string)[]): string {
+	private clauseToString(clause: "GROUP BY" | "ORDER BY" | "WHERE" | "HAVING", content: undefined | GenericQueryColumn | string | (GenericQueryColumn | string)[]): string {
 		if (!content) return "";
 		let result: string;
 		if (Array.isArray(content)) {
@@ -140,6 +181,13 @@ export class Select<D, F extends QueryColumn<string, any>[]> extends BindableEni
 	public asJoinable(alias?: string) {
 		if (!alias) alias = "JoinableSelect" + Select.aliasUid++;
 		let entityBinding: any = {};
+		let all: any = this.selectParams.fields.map(f => {
+			let data = f.getData();
+			data.rawTableName = alias;
+			data.unescapedTableName = alias;
+			data.unescapedColumnName = data.unescapedUserColumnAlias;
+			return new QueryColumn(data, this.escapeFunction);
+		});
 		let res = this.createJoinableProxy(
 			alias,
 			new JoinableSelect(
@@ -147,20 +195,19 @@ export class Select<D, F extends QueryColumn<string, any>[]> extends BindableEni
 				alias,
 				this.selectParams,
 				entityBinding,
-				this.escapeFunction
-			)
+				this.escapeFunction,
+				all
+			),
+			all
 		);
 		entityBinding[alias] = res;
-		return res as JoinableSelectWithFileds<ColTypeRecursionToQueryColumn<F>>;
+		return res as JoinableSelectWithFileds<F, ObjKeyMap2<ColTypeRecursionToQueryColumn<F>>>;
 	}
-	private createJoinableProxy(alias: string, joinableSelect: JoinableSelect<D, F>): any {
-		let fields: {[a: string]: QueryColumn<string, any>} = {};
-		(this.selectParams.fields ?? []).forEach(f => {
-			let data = f.getData();
-			data.unescapedTableName = alias;
-			data.unescapedColumnName = data.unescapedUserColumnAlias;
-			fields[f.unescapedUserColumnAlias] = new QueryColumn(data, this.escapeFunction);
-		});
+	private createJoinableProxy(alias: string, joinableSelect: JoinableSelect<D, F>, all: GenericQueryColumn[]): any {
+		let fields: {[a: string]: GenericQueryColumn} = {};
+		for (let f of all) {
+			fields[f.unescapedUserColumnAlias] = f;
+		}
 		return new Proxy(joinableSelect, {
 			get: (target: any, key) => {
 				let k = key.toString();
@@ -175,11 +222,11 @@ export class Select<D, F extends QueryColumn<string, any>[]> extends BindableEni
 	public get hasHardLimit(): boolean {
 		return this.selectParams.limitSize != null;
 	}
-	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T, D>, executeBefore: ExecuteBefore<void>): PreparedSelect<D, ColTypeRecursion<F>> {
+	public prepare<T>(dbInterfaceConfig: DbInterfaceConfig<T, D>, executeBefore: ExecuteBefore<void>): PreparedSelect<D, ObjKeyMap2<ColTypeRecursion<F>>> {
 		let [sql, paramNames] = getPositionalQuery(this.__sql);
 		return new PreparedSelect(dbInterfaceConfig.dbEngine, sql, paramNames, executeBefore, this.selectParams.dbEngineArgs);
 	}
-	public preparePaged<T>(dbInterfaceConfig: DbInterfaceConfig<T, D>, executeBefore: ExecuteBefore<number | undefined>): PreparedSelectPaged<D, ColTypeRecursion<F>> {
+	public preparePaged<T>(dbInterfaceConfig: DbInterfaceConfig<T, D>, executeBefore: ExecuteBefore<number | undefined>): PreparedSelectPaged<D, ObjKeyMap2<ColTypeRecursion<F>>> {
 		if (this.hasHardLimit)
 			throw new Error(
 				"Pagination is not allowed for selects with hard limit."

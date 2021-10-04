@@ -1,12 +1,12 @@
 import { IDbEngine } from "../db_engine";
 import { DbInterfaceConfig, ExecuteBefore } from "../db_interface";
-import { QueryColumn, Table } from "../entities";
+import { GenericQueryColumn, QueryColumn, Table } from "../entities";
 import { PreparedQuery } from "../prepared_query";
 import { getPositionalQuery, replaceColumnPlaceholders } from "../sql_helper";
 
-export type UpdateParams<D> = Table | {
-	table: Table;
-	fields?: (QueryColumn<string, any> | [QueryColumn<string, any>, string])[];
+export type UpdateParams<D> = Table<any[]> | {
+	table: Table<any[]>;
+	fields?: (GenericQueryColumn | [GenericQueryColumn, string])[];
 	where?: string;
 	dbEngineArgs?: D;
 }
@@ -21,7 +21,7 @@ export class Update<D> {
 		let { table, fields, where, dbEngineArgs } = updateParams;
 		this.dbEngineArgs = dbEngineArgs;
 		let tableName: string = (<any>table).__tableName;
-		let primaryKey: QueryColumn<string, any> = (<any>table).__primaryKey;
+		let primaryKey: GenericQueryColumn = (<any>table).__primaryKey;
 		if (!fields) {
 			let primaryKeyName: string = primaryKey.unescapedUserColumnAlias;
 			let colNames: string[] = Object.getOwnPropertyNames(Object.getPrototypeOf(table)).filter(k => !k.startsWith("__") && k != "constructor" && k != primaryKeyName);

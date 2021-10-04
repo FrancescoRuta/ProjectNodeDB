@@ -1,12 +1,12 @@
 import { IDbEngine } from "../db_engine";
 import { DbInterfaceConfig, ExecuteBefore } from "../db_interface";
-import { QueryColumn, Table } from "../entities";
+import { GenericQueryColumn, QueryColumn, Table } from "../entities";
 import { PreparedQuery } from "../prepared_query";
 import { getPositionalQuery } from "../sql_helper";
 
-export type InsertParams<D> = Table | {
-	table: Table;
-	fields?: (QueryColumn<string, any> | [QueryColumn<string, any>, string])[];
+export type InsertParams<D> = Table<any[]> | {
+	table: Table<any[]>;
+	fields?: (GenericQueryColumn | [GenericQueryColumn, string])[];
 	dbEngineArgs?: D;
 }
 
@@ -20,7 +20,7 @@ export class Insert<D> {
 		let { table, fields, dbEngineArgs } = insertParams;
 		this.dbEngineArgs = dbEngineArgs;
 		if (!fields) {
-			let primaryKey: QueryColumn<string, any> = (<any>table).__primaryKey;
+			let primaryKey: GenericQueryColumn = (<any>table).__primaryKey;
 			let primaryKeyName: string = primaryKey.unescapedColumnName;
 			let colNames: string[] = Object.getOwnPropertyNames(Object.getPrototypeOf(table)).filter(k => !k.startsWith("__") && k != "constructor" && k != primaryKeyName);
 			fields = colNames.map(c => (<any>table)[c]).filter(k => k instanceof QueryColumn);

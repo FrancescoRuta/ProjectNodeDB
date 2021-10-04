@@ -1,11 +1,11 @@
 import { IDbEngine } from "../db_engine";
 import { DbInterfaceConfig, ExecuteBefore } from "../db_interface";
-import { QueryColumn, Table } from "../entities";
+import { GenericQueryColumn, QueryColumn, Table } from "../entities";
 import { PreparedQuery } from "../prepared_query";
 import { getPositionalQuery, replaceColumnPlaceholders } from "../sql_helper";
 
-export type DeleteParams<D> = Table | {
-	table: Table;
+export type DeleteParams<D> = Table<any[]> | {
+	table: Table<any[]>;
 	where?: string;
 	dbEngineArgs?: D;
 }
@@ -20,7 +20,7 @@ export class Delete<D> {
 		let { table, where, dbEngineArgs } = deleteParams;
 		this.dbEngineArgs = dbEngineArgs;
 		let tableName: string = (<any>table).__tableName;
-		let primaryKey: QueryColumn<string, any> = (<any>table).__primaryKey;
+		let primaryKey: GenericQueryColumn = (<any>table).__primaryKey;
 		if (!where) {
 			where = `${primaryKey.columnFullIdentifier}=:${primaryKey.columnFullIdentifier}:`;
 		}

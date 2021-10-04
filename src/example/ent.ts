@@ -1,12 +1,18 @@
-import { ForeignKey, QueryColumn, Table } from "../project/entities";
+import { ForeignKey, GenericQueryColumn, QueryColumn, Table } from "../project/entities";
 
-export class Persone extends Table {
+export class Persone<Alias extends string> extends Table<[QueryColumn<"id", number>, QueryColumn<"comune", string>, QueryColumn<"dataNascita", Date>, QueryColumn<"nome", string>, QueryColumn<"cognome", string>]> {
 	protected __escapedAlias: string;
-	protected __unescapedAlias: string;
-	public constructor(alias?: string) {
+	protected __unescapedAlias: Alias;
+	private constructor(alias: Alias) {
 		super();
-		this.__unescapedAlias = alias ?? "persone";
+		this.__unescapedAlias = alias;
 		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
+	}
+	public static get(): Persone<"persone"> {
+		return new Persone("persone");
+	}
+	public static as<Alias extends string>(alias: Alias): Persone<Alias> {
+		return new Persone(alias);
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
@@ -21,6 +27,10 @@ export class Persone extends Table {
 
 	protected get __tableName(): string {
 		return escapeFunction("persone");
+	}
+	
+	public get All(): [typeof this.id, typeof this.comune, typeof this.dataNascita, typeof this.nome, typeof this.cognome] {
+		return [this.id, this.comune, this.dataNascita, this.nome, this.cognome];
 	}
 	
 	public get id(): QueryColumn<"id", number> {
@@ -72,18 +82,24 @@ export class Persone extends Table {
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
-	protected get __primaryKey(): QueryColumn<string, any> | null {
+	protected get __primaryKey(): GenericQueryColumn | null {
 		return this.id;
 	}
 }
 
-export class Comuni extends Table {
+export class Comuni<Alias extends string> extends Table<[QueryColumn<"id", number>, QueryColumn<"comune", string>, QueryColumn<"provincia", string>]> {
 	protected __escapedAlias: string;
-	protected __unescapedAlias: string;
-	public constructor(alias?: string) {
+	protected __unescapedAlias: Alias;
+	private constructor(alias: Alias) {
 		super();
-		this.__unescapedAlias = alias ?? "Comuni";
+		this.__unescapedAlias = alias;
 		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
+	}
+	public static get(): Comuni<"comuni"> {
+		return new Comuni("comuni");
+	}
+	public static as<Alias extends string>(alias: Alias): Comuni<Alias> {
+		return new Comuni(alias);
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
@@ -95,11 +111,24 @@ export class Comuni extends Table {
 			},
 		];
 	}
-
+	
+	public get All(): [typeof this.id, typeof this.comune, typeof this.provincia] {
+		return [this.id, this.comune, this.provincia];
+	}
+	
 	protected get __tableName(): string {
 		return escapeFunction("comuni");
 	}
 	
+	public get id(): QueryColumn<"id", number> {
+		return new QueryColumn({
+			rawTableName: "comuni",
+			unescapedTableName: this.__unescapedAlias,
+			unescapedColumnName: "id",
+			unescapedUserColumnAlias: "id",
+			castValue: (value: any) => value,
+		}, escapeFunction);
+	}
 	public get comune(): QueryColumn<"comune", string> {
 		return new QueryColumn({
 			rawTableName: "comuni",
@@ -118,27 +147,24 @@ export class Comuni extends Table {
 			castValue: (value: any) => value,
 		}, escapeFunction);
 	}
-	public get id(): QueryColumn<"id", number> {
-		return new QueryColumn({
-			rawTableName: "comuni",
-			unescapedTableName: this.__unescapedAlias,
-			unescapedColumnName: "id",
-			unescapedUserColumnAlias: "id",
-			castValue: (value: any) => value,
-		}, escapeFunction);
-	}
-	protected get __primaryKey(): QueryColumn<string, any> | null {
+	protected get __primaryKey(): GenericQueryColumn | null {
 		return this.id;
 	}
 }
 
-export class ChkinIngressi extends Table {
+export class ChkinIngressi<Alias extends string> extends Table<[QueryColumn<"id", number>, QueryColumn<"idUtente", string>, QueryColumn<"entrata", string>, QueryColumn<"uscita", string>]> {
 	protected __escapedAlias: string;
-	protected __unescapedAlias: string;
-	public constructor(alias?: string) {
+	protected __unescapedAlias: Alias;
+	private constructor(alias: Alias) {
 		super();
-		this.__unescapedAlias = alias ?? "chkinIngressi";
+		this.__unescapedAlias = alias;
 		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
+	}
+	public static get(): ChkinIngressi<"chkinIngressi"> {
+		return new ChkinIngressi("chkinIngressi");
+	}
+	public static as<Alias extends string>(alias: Alias): ChkinIngressi<Alias> {
+		return new ChkinIngressi(alias);
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
@@ -151,12 +177,16 @@ export class ChkinIngressi extends Table {
 		];
 	}
 
-	protected get __primaryKey(): QueryColumn<string, any> | null {
+	protected get __primaryKey(): GenericQueryColumn | null {
 		return this.id;
 	}
 
 	protected get __tableName(): string {
 		return escapeFunction("chkin_ingressi");
+	}
+	
+	public get All(): [typeof this.id, typeof this.idUtente, typeof this.entrata, typeof this.uscita] {
+		return [this.id, this.idUtente, this.entrata, this.uscita];
 	}
 	
 	public get id(): QueryColumn<"id", number> {
@@ -200,25 +230,35 @@ export class ChkinIngressi extends Table {
 	}
 }
 
-export class MngUtenti extends Table{
+export class MngUtenti<Alias extends string> extends Table<[QueryColumn<"id", number>, QueryColumn<"username", string>]> {
 	protected __escapedAlias: string;
-	protected __unescapedAlias: string;
-	public constructor(alias?: string) {
+	protected __unescapedAlias: Alias;
+	private constructor(alias: Alias) {
 		super();
-		this.__unescapedAlias = alias ?? "MngUtenti";
+		this.__unescapedAlias = alias;
 		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
+	}
+	public static get(): MngUtenti<"mngUtenti"> {
+		return new MngUtenti("mngUtenti");
+	}
+	public static as<Alias extends string>(alias: Alias): MngUtenti<Alias> {
+		return new MngUtenti(alias);
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
 		return [];
 	}
 
-	protected get __primaryKey(): QueryColumn<string, any> | null {
+	protected get __primaryKey(): GenericQueryColumn | null {
 		return this.id;
 	}
 
 	protected get __tableName(): string {
 		return escapeFunction("mng_utenti");
+	}
+	
+	public get All(): [typeof this.id, typeof this.username] {
+		return [this.id, this.username];
 	}
 	
 	public get id(): QueryColumn<"id", number> {
@@ -242,13 +282,19 @@ export class MngUtenti extends Table{
 	}
 }
 
-export class Articoli extends Table{
+export class Articoli<Alias extends string> extends Table<[QueryColumn<"id", number>, QueryColumn<"unitaMisura", number>, QueryColumn<"classificazione", number>, QueryColumn<"codice", string>, QueryColumn<"descrizione", string>]> {
 	protected __escapedAlias: string;
-	protected __unescapedAlias: string;
-	public constructor(alias?: string) {
+	protected __unescapedAlias: Alias;
+	private constructor(alias: Alias) {
 		super();
-		this.__unescapedAlias = alias ?? "Articoli";
+		this.__unescapedAlias = alias;
 		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
+	}
+	public static get(): Articoli<"articoli"> {
+		return new Articoli("articoli");
+	}
+	public static as<Alias extends string>(alias: Alias): Articoli<Alias> {
+		return new Articoli(alias);
 	}
 
 	protected get __foreignKeys(): ForeignKey[] {
@@ -265,7 +311,7 @@ export class Articoli extends Table{
 		];
 	}
 
-	protected get __primaryKey(): QueryColumn<string, any> | null {
+	protected get __primaryKey(): GenericQueryColumn | null {
 		return this.id;
 	}
 
@@ -273,8 +319,8 @@ export class Articoli extends Table{
 		return escapeFunction("articoli");
 	}
 	
-	public get All(): [typeof this.id, typeof this.unitaMisura] {
-		return [this.id, this.unitaMisura];
+	public get All(): [typeof this.id, typeof this.unitaMisura, typeof this.classificazione, typeof this.codice, typeof this.descrizione] {
+		return [this.id, this.unitaMisura, this.classificazione, this.codice, this.descrizione];
 	}
 	
 	public get id(): QueryColumn<"id", number> {
@@ -328,20 +374,26 @@ export class Articoli extends Table{
 	}
 }
 
-export class UnitaDiMisura extends Table{
+export class UnitaDiMisura<Alias extends string> extends Table<[QueryColumn<"id", number>, QueryColumn<"simbolo", string>, QueryColumn<"descrizione", string>]> {
 	protected __escapedAlias: string;
-	protected __unescapedAlias: string;
-	public constructor(alias?: string) {
+	protected __unescapedAlias: Alias;
+	private constructor(alias: Alias) {
 		super();
-		this.__unescapedAlias = alias ?? "UnitaDiMisura";
+		this.__unescapedAlias = alias;
 		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
+	}
+	public static get(): UnitaDiMisura<"unitaDiMisura"> {
+		return new UnitaDiMisura("unitaDiMisura");
+	}
+	public static as<Alias extends string>(alias: Alias): UnitaDiMisura<Alias> {
+		return new UnitaDiMisura(alias);
 	}
 	
 	protected get __foreignKeys(): ForeignKey[] {
 		return [];
 	}
 	
-	protected get __primaryKey(): QueryColumn<string, any> | null {
+	protected get __primaryKey(): GenericQueryColumn | null {
 		return this.id;
 	}
 	
@@ -349,6 +401,9 @@ export class UnitaDiMisura extends Table{
 		return escapeFunction("unita_di_misura");
 	}
 	
+	public get All(): [typeof this.id, typeof this.simbolo, typeof this.descrizione] {
+		return [this.id, this.simbolo, this.descrizione];
+	}
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
@@ -381,13 +436,19 @@ export class UnitaDiMisura extends Table{
 	}
 }
 
-export class ArticoliClassificazione extends Table{
+export class ArticoliClassificazione<Alias extends string> extends Table<[QueryColumn<"id", number>, QueryColumn<"idParent", string>, QueryColumn<"path", string>, QueryColumn<"value", string>, QueryColumn<"fullDescPath", string>]> {
 	protected __escapedAlias: string;
-	protected __unescapedAlias: string;
-	public constructor(alias?: string) {
+	protected __unescapedAlias: Alias;
+	private constructor(alias: Alias) {
 		super();
-		this.__unescapedAlias = alias ?? "ArticoliClassificazione";
+		this.__unescapedAlias = alias;
 		this.__escapedAlias = escapeFunction(this.__unescapedAlias);
+	}
+	public static get(): ArticoliClassificazione<"articoliClassificazione"> {
+		return new ArticoliClassificazione("articoliClassificazione");
+	}
+	public static as<Alias extends string>(alias: Alias): ArticoliClassificazione<Alias> {
+		return new ArticoliClassificazione(alias);
 	}
 	
 	protected get __foreignKeys(): ForeignKey[] {
@@ -400,7 +461,7 @@ export class ArticoliClassificazione extends Table{
 		];
 	}
 	
-	protected get __primaryKey(): QueryColumn<string, any> | null {
+	protected get __primaryKey(): GenericQueryColumn | null {
 		return this.id;
 	}
 	
@@ -408,6 +469,9 @@ export class ArticoliClassificazione extends Table{
 		return escapeFunction("articoli__classificazione");
 	}
 	
+	public get All(): [typeof  this.id, typeof  this.idParent, typeof  this.path, typeof  this.value, typeof  this.fullDescPath] {
+		return [this.id, this.idParent, this.path, this.value, this.fullDescPath];
+	}
 	
 	public get id(): QueryColumn<"id", number> {
 		return new QueryColumn({
