@@ -1,100 +1,12 @@
+import { ForeignKey } from "./foreign_key";
+import { JoinablePrimaryKey } from "./joinable_primary_key";
+import { GenericQueryColumn } from "./query_column";
+
 type JoinKey = {
 	column: GenericQueryColumn;
 	tableName: string;
 	ambiguous: boolean;
 };
-
-export interface ForeignKey {
-	column: GenericQueryColumn;
-	tableName: string;
-	ambiguous: boolean;
-}
-
-export interface JoinablePrimaryKey {
-	column: GenericQueryColumn;
-	tableName: string;
-	ambiguous: boolean;
-}
-
-export abstract class BindableEnity {
-	protected abstract get __enityBinding(): string;
-}
-
-export interface QueryColumnData<Name extends string, Ty> {
-	rawTableName: string | undefined;
-	unescapedTableName: string | undefined;
-	unescapedColumnName: string;
-	unescapedUserColumnAlias: Name;
-	sqlValue?: string;
-	castValue: (value: any) => Ty;
-}
-
-export type GenericQueryColumn = QueryColumn<string, any>;
-
-export class QueryColumn<Name extends string, Ty> extends BindableEnity {
-	public constructor(private data: QueryColumnData<Name, Ty>, private escapeFunction: (ident: string) => string) {
-		super();
-	}
-	public get escapedRawTableName(): string | undefined {
-		return this.data.rawTableName ? this.escapeFunction(this.data.rawTableName): undefined;
-	}
-	public get unescapedRawTableName(): string | undefined {
-		return this.data.rawTableName;
-	}
-	public get escapedTableName(): string | undefined {
-		return this.data.unescapedTableName ? this.escapeFunction(this.data.unescapedTableName) : undefined;
-	}
-	public get unescapedTableName(): string | undefined {
-		return this.data.unescapedTableName;
-	}
-	public get escapedColumnName(): string {
-		return this.escapeFunction(this.data.unescapedColumnName);
-	}
-	public get unescapedColumnName(): string {
-		return this.data.unescapedColumnName;
-	}
-	public get escapedUserColumnAlias(): string {
-		return this.escapeFunction(this.data.unescapedUserColumnAlias);
-	}
-	public get unescapedUserColumnAlias(): Name {
-		return this.data.unescapedUserColumnAlias;
-	}
-	public get columnFullIdentifier(): string {
-		return this.data.sqlValue ? this.data.sqlValue : (this.escapedTableName ? this.escapedTableName + "." : "") + this.escapedColumnName;
-	}
-	public get aliasedColumnFullIdentifier(): string {
-		return this.escapedUserColumnAlias != this.escapedColumnName ? this.columnFullIdentifier + " AS " + this.escapedUserColumnAlias : this.columnFullIdentifier;
-	}
-	public castValue(value: any): Ty {
-		return this.data.castValue(value);
-	}
-	public getData(): QueryColumnData<Name, Ty> {
-		return {...this.data};
-	}
-	public as<A extends string>(alias: A): QueryColumn<A, Ty> {
-		return new QueryColumn({
-			unescapedTableName: this.data.unescapedTableName,
-			unescapedColumnName: this.data.unescapedColumnName,
-			rawTableName: this.data.rawTableName,
-			unescapedUserColumnAlias: alias,
-			castValue: this.data.castValue,
-		}, this.escapeFunction);
-	}
-	protected get __enityBinding(): string {
-		return this.columnFullIdentifier;
-	}
-	public static from<A extends string, Ty>(sqlValue: string, alias: A, escapeFunction: (ident: string) => string, castValue?: (value: any) => Ty): QueryColumn<A, Ty> {
-		return new QueryColumn({
-			rawTableName: undefined,
-			unescapedTableName: undefined,
-			unescapedColumnName: alias,
-			unescapedUserColumnAlias: alias,
-			sqlValue,
-			castValue: castValue ?? (a => a),
-		}, escapeFunction);
-	}
-	
-}
 
 export abstract class SqlFrom {
 	protected abstract get __sqlFrom(): string;
@@ -254,34 +166,5 @@ export class JoinResult<F extends any[]> extends Joinable<F> {
 	}
 	public get All(): [...F] {
 		return [...this.all];
-	}
-}
-
-export type GenericTable = Table<GenericQueryColumn[]>;
-export abstract class Table<Columns extends GenericQueryColumn[]> extends Joinable<Columns> {
-	protected abstract get __primaryKey(): GenericQueryColumn | null;
-	protected abstract get __tableName(): string;
-	protected abstract get __escapedAlias(): string;
-	protected abstract get __unescapedAlias(): string;
-	protected abstract get __foreignKeys(): ForeignKey[];
-	protected get __primaryKeys(): JoinablePrimaryKey[] {
-		if (this.__primaryKey == null) return [];
-		return [
-			{
-				column: this.__primaryKey,
-				tableName: this.__tableName,
-				ambiguous: false,
-			},
-		];
-	}
-	protected get __sqlFrom(): string {
-		return this.__tableName == this.__escapedAlias
-			? this.__tableName
-			: this.__tableName + " AS " + this.__escapedAlias;
-	}
-	protected get __entityBindings(): any {
-		let entityBinding: any = {};
-		entityBinding[this.__escapedAlias] = this;
-		return entityBinding;
 	}
 }

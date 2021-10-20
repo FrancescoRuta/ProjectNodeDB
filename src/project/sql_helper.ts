@@ -1,4 +1,4 @@
-import { BindableEnity } from "./entities";
+import { BindableEnity } from "./entities/bindable_enity";
 
 export function getPositionalQuery(sql: string): [string, string[]] {
 	let tokens = tokenizeSqlString(sql);

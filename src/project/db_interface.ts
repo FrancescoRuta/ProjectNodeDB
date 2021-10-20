@@ -1,5 +1,5 @@
 import { IDbEngine } from "./db_engine";
-import { GenericQueryColumn, QueryColumn } from "./entities";
+import { GenericQueryColumn, QueryColumn } from "./entities/query_column";
 import { Delete, DeleteParams, PreparedDelete } from "./operations/delete";
 import { Insert, InsertParams, PreparedInsert } from "./operations/insert";
 import { Select, SelectParams } from "./operations/select";

@@ -1,13 +1,10 @@
 import { IDbEngine } from "../db_engine";
 import { DbInterfaceConfig, ExecuteBefore } from "../db_interface";
-import {
-	BindableEnity,
-	ForeignKey,
-	GenericQueryColumn,
-	Joinable,
-	JoinablePrimaryKey,
-	QueryColumn,
-} from "../entities";
+import { BindableEnity } from "../entities/bindable_enity";
+import { ForeignKey } from "../entities/foreign_key";
+import { Joinable } from "../entities/joinable";
+import { JoinablePrimaryKey } from "../entities/joinable_primary_key";
+import { GenericQueryColumn, QueryColumn } from "../entities/query_column";
 import { PreparedQuery } from "../prepared_query";
 import { getPositionalQuery, replaceColumnPlaceholders } from "../sql_helper";
 

@@ -1,6 +1,7 @@
 import { IDbEngine } from "../db_engine";
 import { DbInterfaceConfig, ExecuteBefore } from "../db_interface";
-import { GenericQueryColumn, GenericTable, QueryColumn, Table } from "../entities";
+import { GenericQueryColumn } from "../entities/query_column";
+import { GenericTable, Table } from "../entities/table";
 import { PreparedQuery } from "../prepared_query";
 import { getPositionalQuery, replaceColumnPlaceholders } from "../sql_helper";
 

@@ -1,4 +1,6 @@
-import { ForeignKey, GenericQueryColumn, QueryColumn, Table } from "../project/entities";
+import { ForeignKey } from "../project/entities/foreign_key";
+import { GenericQueryColumn, QueryColumn } from "../project/entities/query_column";
+import { Table } from "../project/entities/table";
 
 export class Persone<Alias extends string> extends Table<[QueryColumn<"id", number>, QueryColumn<"comune", string>, QueryColumn<"dataNascita", Date>, QueryColumn<"nome", string>, QueryColumn<"cognome", string>]> {
 	protected __escapedAlias: string;
